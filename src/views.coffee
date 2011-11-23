@@ -16,10 +16,6 @@ class SuggestionView extends Backbone.View
     loaded: '<ol>{{#suggestions}}<li><a href="#">{{name}}</a></li>{{/suggestions}}</ol>'
     empty: 'No suggestions were found'
     error: 'An error has occurred while retrieving data'
-    
-  ### Public fields ###
-  @version: VERSION
-  version: VERSION
   
   ### Default options ###
   options:

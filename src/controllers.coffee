@@ -10,10 +10,6 @@ class SuggestionController
   _cacheKey: 'suggestions-cache'
   _request: null
   _timeout: null
-
-  ### Public fields ###
-  @version: VERSION
-  version: VERSION
   
   ### Default options ###
   options:
@@ -47,6 +43,7 @@ class SuggestionController
     key = (@options.url).replace ':query', key.toLowerCase()
     
     cached = @_findCache(key)
+    
     if cached? then () => @_local(cached) else () => @_ajax(key)
     
   ### Complete suggestion with local data ###
@@ -76,7 +73,7 @@ class SuggestionController
     cached = new Cache
       timestamp: new Date
       key: key
-      version: VERSION
+      version: Suggestions.VERSION
       suggestions: suggestions
         
     @_cache.add cached
@@ -125,7 +122,7 @@ class SuggestionController
   _findCache: (key) ->
     suggestions = @_cache.find (item) => item.get('key') is key
 
-    if suggestions? and (suggestions.get('version') isnt @version or (new Date() - suggestions.get('timestamp')) > @options.expiresIn)
+    if suggestions? and (suggestions.get('version') isnt Suggestions.VERSION or (new Date() - suggestions.get('timestamp')) > @options.expiresIn)
       @_cache.remove suggestions
       suggestions = null
 

@@ -1,5 +1,7 @@
 backbone.suggestions
-==================
+====================
+
+An autocompletion view for Backbone.js
 
 Requirements
 ------------
@@ -9,6 +11,22 @@ Requirements
 * [Backbone localStorage](https://github.com/documentcloud/backbone/blob/master/examples/backbone-localstorage.js)
 * [jQuery](http://jquery.com) 1.7
 * [Docco](http://jashkenas.github.com/docco/)
+
+### To build
+
+    cake build
+    
+### To uglify
+
+    cake uglify
+    
+### To build documentation
+
+    cake docs
+    
+### To clean
+
+    cake clean
 
 Introduction
 ------------
@@ -25,7 +43,7 @@ There is no need to add HTML to your document to display the suggestion menu. A 
 
 Usage
 -----
-    window.bbss.SuggestionView(options)
+    Suggestions.View(options)
   
 Options
 -------
@@ -46,12 +64,12 @@ Options
 
 Example
 -------
-    new window.bbss.SuggestionView
+    view = new Suggestions.View
       el: $('input#search')
       url: 'suggestions.json?q=:query'
 
 JSON Results
-----------------
+------------
 When retrieving a JSON formatted response from a GET request the data must be formatted as follows:
 
     {
@@ -63,4 +81,7 @@ When retrieving a JSON formatted response from a GET request the data must be fo
         { "name": "Arkansas" }
       ]
     }
-    
+
+License
+-------
+The backbone.suggestions library is licensed under the MIT license.

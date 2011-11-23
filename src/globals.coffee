@@ -1,9 +1,9 @@
-### TODO: Add the ability to fully customize the AJAX options ###
 $ = jQuery
 
-window.bbss = window.bbss ? {}
+root = this
+Suggestions = root.Suggestions = {}
 
-VERSION = '1.0.0'
+Suggestions.VERSION = '1.0.0'
 
 KEYS =
   UP: 38
