@@ -1,3 +1,3 @@
-window.suggestions.models.Cache = Cache
-window.suggestions.models.CacheCollection = CacheCollection
-window.suggestions.views.SuggestionView = SuggestionView
+window.bbss.Cache = Cache
+window.bbss.CacheCollection = CacheCollection
+window.bbss.SuggestionView = SuggestionView

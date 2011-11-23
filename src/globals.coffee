@@ -1,9 +1,7 @@
 ### TODO: Add the ability to fully customize the AJAX options ###
 $ = jQuery
 
-window.suggestions = window.suggestions ? {}
-window.suggestions.views = window.suggestions.views ? {}
-window.suggestions.models = window.suggestions.models ? {}
+window.bbss = window.bbss ? {}
 
 VERSION = '1.0.0'
 

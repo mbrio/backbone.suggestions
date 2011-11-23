@@ -19,7 +19,7 @@ class SuggestionController
   options:
     url: '/suggestions?q=:query'
     timeout: 500
-    expiresIn: (0.5).minutes()
+    expiresIn: 1000 * 60 * 60 * 12
     
     ### Event callbacks ###
     initiateSuggestion: null
