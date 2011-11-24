@@ -6,11 +6,11 @@ An autocompletion view for Backbone.js
 Requirements
 ------------
 * [CoffeeScript](http://jashkenas.github.com/coffee-script/)
+* [Underscore.js](http://documentcloud.github.com/underscore/) 1.2.2
 * [Backbone.js](http://documentcloud.github.com/backbone/) 0.5.3
 * [localStorage polyfill](https://gist.github.com/350433)
-* [Backbone localStorage](https://github.com/documentcloud/backbone/blob/master/examples/backbone-localstorage.js)
+* [Backbone localStorage](https://github.com/k33g/ossicle/blob/master/js/backbone.sync/backbone-sync-localstorage.js)
 * [jQuery](http://jquery.com) 1.7
-* [Mustache](http://mustache.github.com/)
 * [Docco](http://jashkenas.github.com/docco/)
 
 ### To build
@@ -66,7 +66,6 @@ Options
   * `loading` = The callback that is executed when a remote call is loading.
   * `error` = The callback that is executed when an AJAX error occurs.
   
-
 Example
 -------
     view = new Suggestions.View
@@ -86,6 +85,21 @@ When retrieving a JSON formatted response from a GET request the data must be fo
         { "name": "Arkansas" }
       ]
     }
+
+Demo
+----
+I have supplied a demo application which sits in /demo, along with the necessary libraries and HTML code I've added a Node.js server that will manage sending JSON data to backbone.suggestions.
+
+You can run the Node.js server from the command line:
+
+    cd demo
+    node server.js
+    
+Testing
+-------
+All of the tests are built using [Jasmine](http://pivotal.github.com/jasmine/) and [Mary](https://github.com/alexeypetrushin/mary). You can run the tests by launching /specs/SpecRunner.html in your browser after running the following commands:
+
+cake build && cake spec
 
 License
 -------
