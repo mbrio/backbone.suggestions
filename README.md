@@ -92,14 +92,13 @@ I have supplied a demo application which sits in /demo, along with the necessary
 
 You can run the Node.js server from the command line:
 
-    cd demo
-    node server.js
+    cake demo
     
 Testing
 -------
 All of the tests are built using [Jasmine](http://pivotal.github.com/jasmine/) and [Mary](https://github.com/alexeypetrushin/mary). You can run the tests by launching /specs/SpecRunner.html in your browser after running the following commands:
 
-cake build && cake spec
+    cake build && cake spec
 
 License
 -------

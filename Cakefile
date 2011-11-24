@@ -38,3 +38,6 @@ task 'clean', 'Removes all generated files', ->
   
 task 'spec', 'Compiles all of the spec files', ->
   execute 'coffee --compile specs/'
+  
+task 'demo', 'Launch the demo server', ->
+  execute 'node demo/server.js'
