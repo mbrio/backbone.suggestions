@@ -2,3 +2,7 @@
 Thumbs.db
 lib/
 docs/
+specs/controllers/*.js
+specs/models/*.js
+specs/views/*.js
+specs/*.js
