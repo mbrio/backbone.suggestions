@@ -1,10 +1,12 @@
 class Cache extends Backbone.Model
-  timestamp: null
-  key: null
-  version: null
-  suggestions = null
+  storeName: 'Suggestions.Models.CacheCollection'
+  defaults: 
+    timestamp: null
+    version: Suggestions.version
+    suggestions: null
   
 class CacheCollection extends Backbone.Collection
+  storeName: 'Suggestions.Models.CacheCollection'
   model: Cache
   comparator: (cache) ->
-    cache.get 'key'
+    cache.id

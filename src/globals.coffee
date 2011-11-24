@@ -3,7 +3,7 @@ $ = jQuery
 root = this
 Suggestions = root.Suggestions = {}
 
-Suggestions.VERSION = '1.0.0'
+Suggestions.version = '1.0.0'
 
 KEYS =
   UP: 38

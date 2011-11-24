@@ -73,7 +73,7 @@ class SuggestionController
     cached = new Cache
       timestamp: new Date
       key: key
-      version: Suggestions.VERSION
+      version: Suggestions.version
       suggestions: suggestions
         
     @_cache.add cached
@@ -122,7 +122,7 @@ class SuggestionController
   _findCache: (key) ->
     suggestions = @_cache.find (item) => item.get('key') is key
 
-    if suggestions? and (suggestions.get('version') isnt Suggestions.VERSION or (new Date() - suggestions.get('timestamp')) > @options.expiresIn)
+    if suggestions? and (suggestions.get('version') isnt Suggestions.version or (new Date() - suggestions.get('timestamp')) > @options.expiresIn)
       @_cache.remove suggestions
       suggestions = null
 

@@ -15,9 +15,13 @@ src = [
     'src/views.coffee',
     'src/exports.coffee'
   ]
-generatedDirs = [
+generatedFiles = [
     'docs/',
-    'lib/'
+    'lib/',
+    'specs/controllers/*.js',
+    'specs/models/*.js',
+    'specs/views/*.js',
+    'specs/*.js'
   ]
 
 task 'build', 'Compile CoffeeScript to JavaScript', ->
@@ -30,4 +34,7 @@ task 'uglify', 'Uglify the resulting application file after build', ->
   execute "uglifyjs #{output} > #{uglifyOutput}"
   
 task 'clean', 'Removes all generated files', ->
-  execute "rm -rf #{generatedDirs.join ' '}"
+  execute "rm -rf #{generatedFiles.join ' '}"
+  
+task 'spec', 'Compiles all of the spec files', ->
+  execute 'coffee --compile specs/'

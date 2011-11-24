@@ -10,6 +10,7 @@ Requirements
 * [localStorage polyfill](https://gist.github.com/350433)
 * [Backbone localStorage](https://github.com/documentcloud/backbone/blob/master/examples/backbone-localstorage.js)
 * [jQuery](http://jquery.com) 1.7
+* [Mustache](http://mustache.github.com/)
 * [Docco](http://jashkenas.github.com/docco/)
 
 ### To build
@@ -19,6 +20,10 @@ Requirements
 ### To uglify
 
     cake uglify
+    
+### To build spec tests
+
+    cake spec
     
 ### To build documentation
 
