@@ -67,9 +67,6 @@ class SuggestionController
   ### Process the retrieved data prior to completing the suggestion with local
       data ###
   _processAjax: (key, suggestions) ->
-    # TODO: Remove this line
-    suggestions = @_preprocessAjax suggestions
-
     cached = new Cache
       timestamp: new Date
       key: key
@@ -80,12 +77,6 @@ class SuggestionController
     @_save()
     
     @_local(cached)
-   
-  ### This is a temporary method for testing ###
-  ### TODO: Remove this method ###
-  _preprocessAjax: (suggestions) ->
-    val = @el.val().toLowerCase()
-    (suggestion for suggestion in suggestions ? [] when suggestion.name.toLowerCase().indexOf(val) is 0)
     
   ### Methods for managing the cache ###
   

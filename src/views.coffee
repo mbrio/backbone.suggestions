@@ -10,12 +10,13 @@ class SuggestionView extends Backbone.View
   
   ### Templates that define the layout of the menu for each of it's states ###
   _templates:
-    container: '<div></div>'
-    default: 'Begin typing for suggestions'
-    loading: 'Begin typing for suggestions (Loading...)'
-    loaded: '<ol>{{#suggestions}}<li><a href="#">{{name}}</a></li>{{/suggestions}}</ol>'
-    empty: 'No suggestions were found'
-    error: 'An error has occurred while retrieving data'
+    container: _.template('<div></div>')
+    default: _.template('Begin typing for suggestions')
+    loading: _.template('Begin typing for suggestions (Loading...)')
+    loadedList: _.template('<ol></ol>')
+    loadedItem: _.template('<li><a href="#"><%= name %></a></li>')
+    empty: _.template('No suggestions were found')
+    error: _.template('An error has occurred while retrieving data')
   
   ### Default options ###
   options:
@@ -138,7 +139,7 @@ class SuggestionView extends Backbone.View
     
   ### Generates the menu HTML ###
   _generateMenu: ->
-    @_menu = $(Mustache.to_html @_templates.container).addClass(@options.cssClass).css
+    @_menu = $(@_templates.container()).addClass(@options.cssClass).css
       'display': 'none'
       'position': 'absolute'
       'z-index': @options.zIndex
@@ -177,23 +178,23 @@ class SuggestionView extends Backbone.View
     @_menu.css
       left: @el.offset().left
       top: @el.offset().top + @el.outerHeight()
-      width: @el.outerWidth()
   
   ### Renders the template of the menu ###
   render: (state, parameters) ->
     @_menu.empty()
     
     switch state
-      when 'default' then @_menu.append Mustache.to_html(@_templates.default)
-      when 'loading' then @_menu.append Mustache.to_html(@_templates.loading)
+      when 'default' then @_menu.append @_templates.default()
+      when 'loading' then @_menu.append @_templates.loading()
       when 'loaded'
-        @_menu.append Mustache.to_html @_templates.loaded,
-          suggestions: parameters
+        list = $(@_templates.loadedList());
+        list.append @_templates.loadedItem(suggestion) for suggestion in parameters
+        @_menu.append list
           
         @_menu.find('> ol > li:first-child').addClass('selected')
         @_menu.find('> ol > li > a').click (event) =>
           @select($(event.target).text())
           
-      when 'empty' then @_menu.append Mustache.to_html(@_templates.empty)
-      when 'error' then @_menu.append Mustache.to_html(@_templates.error)
+      when 'empty' then @_menu.append @_templates.empty()
+      when 'error' then @_menu.append @_templates.error()
       else @render 'default'
