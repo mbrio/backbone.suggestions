@@ -28,10 +28,10 @@ class SuggestionView extends Backbone.View
     selected: null
     
   
-  _ehkeydown: (event) => @_keydown(event)
-  _ehkeyup: (event) => @_keyup(event)
-  _ehblur: (event) => @_blur(event)
-  _ehfocus: (event) => @_focus(event)
+  _onkeydown: (event) => @_keydown(event)
+  _onkeyup: (event) => @_keyup(event)
+  _onblur: (event) => @_blur(event)
+  _onfocus: (event) => @_focus(event)
     
   ### Initializes the object ###
   initialize: ->
@@ -55,22 +55,22 @@ class SuggestionView extends Backbone.View
     @_controller.is_enabled()
     
   _enabled: ->
-    @el.bind (if $.browser.opera then 'keypress' else 'keydown'), @_ehkeydown
+    @el.bind (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
     @el.bind
-      keyup: @_ehkeyup
-      blur: @_ehblur
-      focus: @_ehfocus
+      keyup: @_onkeyup
+      blur: @_onblur
+      focus: @_onfocus
       
     @_specified?.enabled?()
     
   _disabled: ->
     @el.blur()
     
-    @el.unbind (if $.browser.opera then 'keypress' else 'keydown'), @_ehkeydown
+    @el.unbind (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
     @el.unbind
-      keyup: @_ehkeyup
-      blur: @_ehblur
-      focus: @_ehfocus
+      keyup: @_onkeyup
+      blur: @_onblur
+      focus: @_onfocus
       
     @_specified?.disabled?()
     
