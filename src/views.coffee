@@ -27,6 +27,12 @@ class SuggestionView extends Backbone.View
     ### Event callbacks ###
     selected: null
     
+  
+  _ehkeydown: (event) => @_keydown(event)
+  _ehkeyup: (event) => @_keyup(event)
+  _ehblur: (event) => @_blur(event)
+  _ehfocus: (event) => @_focus(event)
+    
   ### Initializes the object ###
   initialize: ->
     @el.attr 'autocomplete', 'off'
@@ -38,16 +44,41 @@ class SuggestionView extends Backbone.View
     @options.suggested = (cached) => @_suggested(cached)
     @options.error = (jqXHR, textStatus, errorThrown) => @_error(jqXHR, textStatus, errorThrown)
     @options.loading = => @_loading()
+    @options.enabled = => @_enabled()
+    @options.disabled = => @_disabled()
 
     @_controller = new SuggestionController @el, @options
     
     @_generateMenu()
+      
+  is_enabled: ->
+    @_controller.is_enabled()
     
-    @el.bind (if $.browser.opera then 'keypress' else 'keydown'), (event) => @_keydown(event)
+  _enabled: ->
+    @el.bind (if $.browser.opera then 'keypress' else 'keydown'), @_ehkeydown
     @el.bind
-      keyup: (event) => @_keyup(event)
-      blur: (event) => @_blur(event)
-      focus: (event) => @_focus(event)
+      keyup: @_ehkeyup
+      blur: @_ehblur
+      focus: @_ehfocus
+      
+    @_specified?.enabled?()
+    
+  _disabled: ->
+    @el.blur()
+    
+    @el.unbind (if $.browser.opera then 'keypress' else 'keydown'), @_ehkeydown
+    @el.unbind
+      keyup: @_ehkeyup
+      blur: @_ehblur
+      focus: @_ehfocus
+      
+    @_specified?.disabled?()
+    
+  enable: ->
+    @_controller.enable()
+        
+  disable: ->
+    @_controller.disable()
         
   ### Callback for when a suggestion is initialized ###
   _initiateSuggestion: ->

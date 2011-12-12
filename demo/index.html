@@ -47,7 +47,7 @@
   
   <script>    
     $(function() {
-      new Suggestions.View({
+      sv = new Suggestions.View({
         el: $('input[type="text"].suggestions'),
         url: 'http://127.0.0.1:8888/?q=:query'
       });

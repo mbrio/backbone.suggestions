@@ -1,8 +1,9 @@
 ### The controller that manages the retrieval of suggestions ###
-class SuggestionController
+class SuggestionController  
   ### Initializes the object ###
   constructor: (@el, options) ->
     @options = _.defaults options, @options
+    if @options.enable ? true then @enable() else @disable()
 
     @_load()
     
@@ -23,9 +24,28 @@ class SuggestionController
     suggested: null
     loading: null
     error: null
+    enabled: null
+    disabled: null
+    
+  is_enabled: ->
+    @_enabled
+    
+  enable: ->
+    return if @_enabled
+    @halt()
+    @_enabled = true
+    @options.enabled?()
+  
+  disable: ->
+    return unless @_enabled
+    @halt()
+    @_enabled = false
+    @options.disabled?()
     
   ### Initializes a suggestion ###
   suggest: ->
+    return unless @is_enabled()
+    
     @options.initiateSuggestion?()
     @halt();
 
