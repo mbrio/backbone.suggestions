@@ -31,13 +31,16 @@ task 'docs', 'Generate documentation', ->
   execute 'docco src/*.coffee'
   
 task 'uglify', 'Uglify the resulting application file after build', ->
+  task 'build'
   execute "uglifyjs #{output} > #{uglifyOutput}"
   
 task 'clean', 'Removes all generated files', ->
   execute "rm -rf #{generatedFiles.join ' '}"
   
 task 'spec', 'Compiles all of the spec files', ->
+  task 'uglify'
   execute 'coffee --compile specs/'
   
 task 'demo', 'Launch the demo server', ->
+  task 'uglify'
   execute 'node demo/server.js'
