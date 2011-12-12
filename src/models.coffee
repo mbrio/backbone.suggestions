@@ -1,4 +1,5 @@
 class Cache extends Backbone.Model
+  storageEngine: 'localStorage'
   storeName: 'Suggestions.Models.CacheCollection'
   defaults: 
     timestamp: null
@@ -6,6 +7,7 @@ class Cache extends Backbone.Model
     suggestions: null
   
 class CacheCollection extends Backbone.Collection
+  storageEngine: 'localStorage'
   storeName: 'Suggestions.Models.CacheCollection'
   model: Cache
   comparator: (cache) ->

@@ -9,7 +9,7 @@ Requirements
 * [Underscore.js](http://documentcloud.github.com/underscore/) 1.2.2
 * [Backbone.js](http://documentcloud.github.com/backbone/) 0.5.3
 * [localStorage polyfill](https://gist.github.com/350433)
-* [Backbone localStorage](https://github.com/k33g/ossicle/blob/master/js/backbone.sync/backbone-sync-localstorage.js)
+* [Backbone Sync Storage Engines + localStorage](https://gist.github.com/1468270)
 * [jQuery](http://jquery.com) 1.7
 * [Docco](http://jashkenas.github.com/docco/)
 
