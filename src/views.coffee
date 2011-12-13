@@ -24,20 +24,22 @@ class SuggestionView extends Backbone.View
     cssClass: 'suggestions-menu'
     selectedCssClass: 'selected'
     enableForceClose: true
+    templates: null
     
     ### Event callbacks ###
     selected: null
     
   
-  _onkeydown: (event) => @_keydown(event)
-  _onkeyup: (event) => @_keyup(event)
-  _onblur: (event) => @_blur(event)
-  _onfocus: (event) => @_focus(event)
+  _onkeydown: (event) => @_keydown event
+  _onkeyup: (event) => @_keyup event
+  _onblur: (event) => @_blur event
+  _onfocus: (event) => @_focus event
     
   ### Initializes the object ###
   initialize: ->
     @el.attr 'autocomplete', 'off'
-    @_specified = _.clone(@options)
+    @_specified = _.clone @options
+    @templates = _.defaults @options.templates, @templates if @options?.templates?
     
     @options.initiateSuggestion = => @_initiateSuggestion()
     @options.suggesting = => @_suggesting()

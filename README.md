@@ -113,14 +113,34 @@ Options
   
 Example
 ---
-    view = new Suggestions.View
-      el: $('input#search')
-      url: 'suggestions.json?q=:query'
+    view = new Suggestions.View({
+      el: $('input[type="text"].suggestions'),
+      url: '/suggestions.json?q=:query'
+    });
+      
+Templates
+---
+You can pass templates in as options, the following example displays all of
+the available template options and what their default values are. The values
+for each of the templates must result in a function.
+ 
+    view = new Suggestions.View({
+      el: $('input[type="text"].suggestions'),
+      url: '/suggestions.json?q=:query',
+      templates: {
+        default: _.template('<span class="message default">Begin typing for suggestions</span>'),
+        loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>'),
+        loadedList: _.template('<ol></ol>'),
+        loadedItem: _.template('<li><a href="#"><%= name %></a></li>'),
+        empty: _.template('<span class="message empty">No suggestions were found</span>'),
+        error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
+      }
+    });
 
 JSON Results
 ---
-When retrieving a JSON formatted response from a GET request the data must be
-formatted as follows:
+JSON formatted responses must contain 1 object with a property called
+`suggestions` that represents an array of suggestion values.
 
     {
       "suggestions": [
@@ -131,6 +151,10 @@ formatted as follows:
         { "name": "Arkansas" }
       ]
     }
+    
+Your suggestions do not have to contain the same data as above (i.e. a
+property called `name`); though if they contain fields different than above
+you must pass in a custom `templates.loadedItem` template.
     
 Testing
 ---

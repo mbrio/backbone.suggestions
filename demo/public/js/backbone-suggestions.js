@@ -347,6 +347,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       cssClass: 'suggestions-menu',
       selectedCssClass: 'selected',
       enableForceClose: true,
+      templates: null,
       /* Event callbacks
       */
       selected: null
@@ -372,9 +373,13 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype.initialize = function() {
+      var _ref;
       var _this = this;
       this.el.attr('autocomplete', 'off');
       this._specified = _.clone(this.options);
+      if (((_ref = this.options) != null ? _ref.templates : void 0) != null) {
+        this.templates = _.defaults(this.options.templates, this.templates);
+      }
       this.options.initiateSuggestion = function() {
         return _this._initiateSuggestion();
       };
