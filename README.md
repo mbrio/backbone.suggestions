@@ -1,10 +1,10 @@
-backbone.suggestions
-====================
+backbone.suggestions.js
+===
 
 An autocompletion view for Backbone.js
 
 Requirements
-------------
+---
 * [CoffeeScript](http://jashkenas.github.com/coffee-script/)
 * [Underscore.js](http://documentcloud.github.com/underscore/) 1.2.2
 * [Backbone.js](http://documentcloud.github.com/backbone/) 0.5.3
@@ -39,8 +39,8 @@ Requirements
     cake clean
 
 Introduction
-------------
-backbone.suggestions is a Backbone.js view written in CoffeeScript that
+---
+backbone.suggestions.js is a Backbone.js view written in CoffeeScript that
 enables AJAX autocompletion backed by a localStorage cache for text input 
 fields.
 
@@ -56,7 +56,7 @@ element.
     </div>
     
 Demo
-----
+---
 I have supplied a demo application which sits in /demo, along with the
 necessary libraries and HTML code. I've added an Express server that will
 manage serving HTML and JSON data.
@@ -68,11 +68,11 @@ the compiled JS will be cached for five seconds.
 The demo will run on port 3000, http://localhost:3000.
 
 Usage
------
+---
     Suggestions.View(options)
   
 Options
--------
+---
 * `@options` = The suggestions options (all Backbone.View options can be
   passed as well)
   * `url` = The URL of the REST action, any reference to `:query` within the
@@ -112,13 +112,13 @@ Options
   * `disabled` = The callback that is executed when the view is disabled.
   
 Example
--------
+---
     view = new Suggestions.View
       el: $('input#search')
       url: 'suggestions.json?q=:query'
 
 JSON Results
-------------
+---
 When retrieving a JSON formatted response from a GET request the data must be
 formatted as follows:
 
@@ -133,7 +133,7 @@ formatted as follows:
     }
     
 Testing
--------
+---
 All of the tests are built using [Jasmine](http://pivotal.github.com/jasmine/)
 and [Mary](https://github.com/alexeypetrushin/mary). You can run the tests by
 launching /specs/SpecRunner.html in your browser after running the following
@@ -142,5 +142,6 @@ commands:
     cake spec
 
 License
--------
-The backbone.suggestions library is licensed under the MIT license.
+---
+The backbone.suggestions.js library is licensed under the MIT license. For
+more information see the [Wiki](https://github.com/mbrio/backbone.suggestions/wiki/License).

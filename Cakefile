@@ -1,6 +1,11 @@
 # https://github.com/jashkenas/coffee-script/wiki/[HowTo]-Compiling-and-Setting-Up-Build-Tools
 
+fs = require('fs')
+path = require('path')
+coffee = require('coffee-script')
+
 {exec} = require 'child_process'
+    
 execute = (cmd) ->
   exec cmd, (err, stdout, stderr) ->
     throw err if err
@@ -26,7 +31,28 @@ generatedFiles = [
   ]
 
 task 'build', 'Compile CoffeeScript to JavaScript', ->
-  execute "coffee --join #{output} --compile #{src.join ' '}"
+  libs = path.join __dirname, 'src'
+  version = fs.readFileSync(path.join __dirname, 'VERSION').toString().trim()
+  dir = path.join __dirname, 'lib'
+  output = path.join dir, 'backbone-suggestions.js'
+  copyright = path.join libs, 'copyright.js'
+  csfiles = [
+    path.join libs, 'globals.coffee'
+    path.join libs, 'models.coffee'
+    path.join libs, 'controllers.coffee'
+    path.join libs, 'views.coffee'
+    path.join libs, 'exports.coffee'
+  ]
+  
+  fs.mkdirSync dir unless path.existsSync dir
+  
+  fd = fs.openSync output, 'w'
+  contents = []
+  contents.push fs.readFileSync(csfile).toString() for csfile in csfiles
+  
+  fs.writeSync fd, "#{fs.readFileSync(copyright).toString().replace('@@VERSION@@', version)}\n"
+  fs.writeSync fd, coffee.compile(contents.join('\n').replace('@@VERSION@@', version))
+  fs.closeSync fd
 
 task 'docs', 'Generate documentation', ->
   execute 'docco src/*.coffee'

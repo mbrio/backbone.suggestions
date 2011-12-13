@@ -1,3 +1,10 @@
+/*
+backbone.suggestions.js 0.5.0
+(c) 2011 Michael Diolosa, Deepend New York, Inc.
+backbone.suggestions.js may be freely distributed under the MIT license.
+For all details and documentation:
+https://github.com/mbrio/backbone.suggestions/wiki/License
+*/
 (function() {
   var $, Cache, CacheCollection, KEYS, SuggestionController, SuggestionView, Suggestions, root;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
@@ -8,7 +15,7 @@
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '1.0.0';
+  Suggestions.version = '0.5.0';
 
   KEYS = {
     UP: 38,
