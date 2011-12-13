@@ -8,6 +8,7 @@
       font-family: 'Helvetica Neue', arial, helvetica, verdana, sans-serif;
       font-size: 13px;
     }
+    
     #container {
       width: 500px;
       margin: 0 auto;
@@ -19,8 +20,9 @@
     }
     
     .suggestions-menu {
+      position: absolute;
       width: 186px;
-      margin: 10px 0 0 0;
+      margin: 0;
       padding: 10px;
       border: solid 1px #333;
     }
@@ -30,11 +32,26 @@
       padding: 0;
       list-style: none;
     }
+    
+    .suggestions-menu ol li a, .suggestions-menu ol li a:link, .suggestions-menu ol li a:visited,
+    .suggestions-menu ol li a:hover, .suggestions-menu ol li a:active {
+      color: #333;
+      text-decoration: none;
+    }
+    
+    .suggestions-menu ol li.selected a, .suggestions-menu ol li.selected a:link, .suggestions-menu ol li.selected a:visited,
+    .suggestions-menu ol li.selected a:hover, .suggestions-menu ol li.selected a:active {
+      color: #C00;
+    }
+    
+    input {
+      margin: 0;
+    }
   </style>
 </head>
 <body>
   <div id='container'>
-    <label for='state'>State:</label> <input type='text' id='state' name='state' class='suggestions'>
+    <label for='state'>State:</label> <div><input type='text' id='state' name='state' class='suggestions'></div>
   </div>
   
   <script src="lib/localStorage-polyfill.min.js"></script>

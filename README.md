@@ -58,6 +58,8 @@ Options
   * `expiresIn` = The expiration duration of cached results. (default: 0.5 days)
   * `zIndex` = The z-index of the `<div>` containing element. (default: 500)
   * `cssClass` = The CSS class that is applied to the `<div>` containing element. (default: 'suggestions-menu')
+  * `offsetLeft` = The number of pixels to offset the position of the popup to by the `left` CSS property, position starts at the bottom left corner of the input field. (default: 0)
+  * `offsetTop` = The number of pixels to offset the position of the popup to by the `top` CSS property, position starts at the bottom left corner of the input field. (default: 0)
   * `selectedCssClass` = The CSS class that is applied to the `<li>` element that is selected. (default: 'selected')
   * `selected` = The callback that is executed when a suggestion is selected.
   * `initiateSuggestion` = The callback that is executed at the beginning of a suggestion.
@@ -65,6 +67,8 @@ Options
   * `suggested` = The callback that is executed when suggestions are displayed.
   * `loading` = The callback that is executed when a remote call is loading.
   * `error` = The callback that is executed when an AJAX error occurs.
+  * `enabled` = The callback that is executed when the view is enabled.
+  * `disabled` = The callback that is executed when the view is disabled.
   
 Example
 -------

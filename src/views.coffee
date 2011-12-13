@@ -9,20 +9,21 @@ class SuggestionView extends Backbone.View
   _specified: null
   
   ### Templates that define the layout of the menu for each of it's states ###
-  _templates:
+  templates:
     container: _.template('<div></div>')
-    default: _.template('Begin typing for suggestions')
-    loading: _.template('Begin typing for suggestions (Loading...)')
+    default: _.template('<span class="message default">Begin typing for suggestions</span>')
+    loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
     loadedList: _.template('<ol></ol>')
     loadedItem: _.template('<li><a href="#"><%= name %></a></li>')
-    empty: _.template('No suggestions were found')
-    error: _.template('An error has occurred while retrieving data')
+    empty: _.template('<span class="message empty">No suggestions were found</span>')
+    error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
   
   ### Default options ###
   options:
     zIndex: 500
     cssClass: 'suggestions-menu'
     selectedCssClass: 'selected'
+    enableForceClose: true
     
     ### Event callbacks ###
     selected: null
@@ -36,7 +37,6 @@ class SuggestionView extends Backbone.View
   ### Initializes the object ###
   initialize: ->
     @el.attr 'autocomplete', 'off'
-    
     @_specified = _.clone(@options)
     
     @options.initiateSuggestion = => @_initiateSuggestion()
@@ -140,7 +140,7 @@ class SuggestionView extends Backbone.View
           @hide()
 
       when KEYS.ESC
-        return unless @_menuVisible
+        return unless @_menuVisible && @options.enableForceClose == true
         event.preventDefault()
         
         @_forceClosed = true
@@ -170,12 +170,10 @@ class SuggestionView extends Backbone.View
     
   ### Generates the menu HTML ###
   _generateMenu: ->
-    @_menu = $(@_templates.container()).addClass(@options.cssClass).css
-      'display': 'none'
-      'position': 'absolute'
-      'z-index': @options.zIndex
+    @_menu = $(@templates.container()).addClass(@options.cssClass).css
+      display: 'none'
 
-    $(document.body).append(@_menu)
+    @el.parent().append(@_menu)
       
   ### Displays the menu ###
   show: ->
@@ -185,7 +183,7 @@ class SuggestionView extends Backbone.View
     @_controller.halt()
     @render 'default'
     
-    @_position()
+    #@_position()
     @_menu.fadeIn
       duration: 200
       
@@ -205,27 +203,28 @@ class SuggestionView extends Backbone.View
     @options.selected?(val)
     
   ### Updates the position of the menu ###
-  _position: ->
-    @_menu.css
-      left: @el.offset().left
-      top: @el.offset().top + @el.outerHeight()
+  #_position: ->
+    #offset = @el.offset()
+    #@_menu.css
+    #  left: offset.left + @options.offsetLeft
+    #  top: offset.top + @options.offsetTop
   
   ### Renders the template of the menu ###
   render: (state, parameters) ->
     @_menu.empty()
     
     switch state
-      when 'default' then @_menu.append @_templates.default()
-      when 'loading' then @_menu.append @_templates.loading()
+      when 'default' then @_menu.append @templates.default()
+      when 'loading' then @_menu.append @templates.loading()
       when 'loaded'
-        list = $(@_templates.loadedList());
-        list.append @_templates.loadedItem(suggestion) for suggestion in parameters
+        list = $(@templates.loadedList());
+        list.append @templates.loadedItem(suggestion) for suggestion in parameters
         @_menu.append list
           
         @_menu.find('> ol > li:first-child').addClass('selected')
         @_menu.find('> ol > li > a').click (event) =>
           @select($(event.target).text())
           
-      when 'empty' then @_menu.append @_templates.empty()
-      when 'error' then @_menu.append @_templates.error()
+      when 'empty' then @_menu.append @templates.empty()
+      when 'error' then @_menu.append @templates.error()
       else @render 'default'
