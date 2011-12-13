@@ -16,6 +16,7 @@ src = [
     'src/exports.coffee'
   ]
 generatedFiles = [
+    'demo/public/js/backbone-suggestions.js'
     'docs/',
     'lib/',
     'specs/controllers/*.js',
@@ -31,16 +32,15 @@ task 'docs', 'Generate documentation', ->
   execute 'docco src/*.coffee'
   
 task 'uglify', 'Uglify the resulting application file after build', ->
-  task 'build'
+  invoke 'build'
   execute "uglifyjs #{output} > #{uglifyOutput}"
   
 task 'clean', 'Removes all generated files', ->
   execute "rm -rf #{generatedFiles.join ' '}"
   
 task 'spec', 'Compiles all of the spec files', ->
-  task 'uglify'
+  invoke 'uglify'
   execute 'coffee --compile specs/'
   
 task 'demo', 'Launch the demo server', ->
-  task 'uglify'
-  execute 'node demo/server.js'
+  app = require './demo/app'

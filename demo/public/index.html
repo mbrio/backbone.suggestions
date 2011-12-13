@@ -54,19 +54,19 @@
     <label for='state'>State:</label> <div><input type='text' id='state' name='state' class='suggestions'></div>
   </div>
   
-  <script src="lib/localStorage-polyfill.min.js"></script>
-  <script src="lib/underscore-1.2.2.min.js"></script>
-  <script src="lib/json2.min.js"></script>
-  <script src="lib/backbone-0.5.3.min.js"></script>
-  <script src="lib/backbone-sync-storageEngines.js"></script>
-  <script src="lib/jquery-1.7.min.js"></script>
-  <script src="../lib/backbone-suggestions.js"></script>
+  <script src="js/localStorage-polyfill.min.js"></script>
+  <script src="js/underscore-1.2.2.min.js"></script>
+  <script src="js/json2.min.js"></script>
+  <script src="js/backbone-0.5.3.min.js"></script>
+  <script src="js/backbone-sync-storageEngines.js"></script>
+  <script src="js/jquery-1.7.min.js"></script>
+  <script src="js/backbone-suggestions.js"></script>
   
   <script>    
     $(function() {
       sv = new Suggestions.View({
         el: $('input[type="text"].suggestions'),
-        url: 'http://127.0.0.1:8888/?q=:query'
+        url: '/suggestions.json?q=:query'
       });
     });
   </script>

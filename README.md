@@ -10,9 +10,14 @@ Requirements
 * [Backbone.js](http://documentcloud.github.com/backbone/) 0.5.3
 * [localStorage polyfill](https://gist.github.com/350433)
 * [Backbone Sync Storage Engines + localStorage](https://gist.github.com/1468270)
+* [Express](http://expressjs.com/) 2.5.1
 * [jQuery](http://jquery.com) 1.7
 * [Docco](http://jashkenas.github.com/docco/)
 
+### To run the demo
+
+    cake demo
+    
 ### To build
 
     cake build
@@ -35,9 +40,13 @@ Requirements
 
 Introduction
 ------------
-backbone.suggestions is a Backbone.js view written in CoffeeScript that enables AJAX autocompletion backed by a localStorage cache for text input fields.
+backbone.suggestions is a Backbone.js view written in CoffeeScript that
+enables AJAX autocompletion backed by a localStorage cache for text input 
+fields.
 
-There is no need to add HTML to your document to display the suggestion menu. A `<div>` element will be generated and placed within the `document.body` element.
+There is no need to add HTML to your document to display the suggestion menu.
+A `<div>` element will be generated and placed within the `document.body`
+element.
   
     <div class="suggestions-menu">
       <ol>
@@ -45,6 +54,18 @@ There is no need to add HTML to your document to display the suggestion menu. A 
         <li>Alaska</li>
       </ol>
     </div>
+    
+Demo
+----
+I have supplied a demo application which sits in /demo, along with the
+necessary libraries and HTML code. I've added an Express server that will
+manage serving HTML and JSON data.
+
+There is a custom compiler middleware configured within the demo that will
+compile the CoffeeScript files automatically whenever a JS file is requested,
+the compiled JS will be cached for five seconds.
+
+The demo will run on port 3000, http://localhost:3000.
 
 Usage
 -----
@@ -52,20 +73,39 @@ Usage
   
 Options
 -------
-* `@options` = The suggestions options (all Backbone.View options can be passed as well)
-  * `url` = The URL of the REST action, any reference to `:query` within the string will be replaced by the text within the input box. (default: '/suggestions?q=:query')
-  * `timeout` = Waiting period before asking for a suggestion. (default: 500)
-  * `expiresIn` = The expiration duration of cached results. (default: 0.5 days)
-  * `zIndex` = The z-index of the `<div>` containing element. (default: 500)
-  * `cssClass` = The CSS class that is applied to the `<div>` containing element. (default: 'suggestions-menu')
-  * `offsetLeft` = The number of pixels to offset the position of the popup to by the `left` CSS property, position starts at the bottom left corner of the input field. (default: 0)
-  * `offsetTop` = The number of pixels to offset the position of the popup to by the `top` CSS property, position starts at the bottom left corner of the input field. (default: 0)
-  * `selectedCssClass` = The CSS class that is applied to the `<li>` element that is selected. (default: 'selected')
-  * `enableForceClose` = Enables or disables auto-complete windows closing when the `esc` key is pressed. (default: true)
+* `@options` = The suggestions options (all Backbone.View options can be
+  passed as well)
+  * `url` = The URL of the REST action, any reference to `:query` within the
+    string will be replaced by the text within the input box.
+    (default: '/suggestions?q=:query')
+  * `timeout` = Waiting period before asking for a suggestion.
+    (default: 500)
+  * `expiresIn` = The expiration duration of cached results.
+    (default: 0.5 days)
+  * `zIndex` = The z-index of the `<div>` containing element.
+      (default: 500)
+  * `cssClass` = The CSS class that is applied to the `<div>` containing
+    element.
+    (default: 'suggestions-menu')
+  * `offsetLeft` = The number of pixels to offset the position of the popup to
+    by the `left` CSS property, position starts at the bottom left corner of
+    the input field. (default: 0)
+  * `offsetTop` = The number of pixels to offset the position of the popup to
+    by the `top` CSS property, position starts at the bottom left corner of
+    the input field. (default: 0)
+  * `selectedCssClass` = The CSS class that is applied to the `<li>` element
+    that is selected. (default: 'selected')
+  * `enableForceClose` = Enables or disables auto-complete windows closing
+    when the `esc` key is pressed. (default: true)
   * `selected` = The callback that is executed when a suggestion is selected.
-  * `initiateSuggestion` = The callback that is executed at the beginning of a suggestion.
-  * `suggesting` = The callback that is executed when the application begins the suggestion process. This callback only occurs if a suggestion can proceed, the only state it cannot proceed in is when the input field is blank.
-  * `suggested` = The callback that is executed when suggestions are displayed.
+  * `initiateSuggestion` = The callback that is executed at the beginning of a
+    suggestion.
+  * `suggesting` = The callback that is executed when the application begins
+    the suggestion process. This callback only occurs if a suggestion can
+    proceed, the only state it cannot proceed in is when the input field is
+    blank.
+  * `suggested` = The callback that is executed when suggestions are
+    displayed.
   * `loading` = The callback that is executed when a remote call is loading.
   * `error` = The callback that is executed when an AJAX error occurs.
   * `enabled` = The callback that is executed when the view is enabled.
@@ -79,7 +119,8 @@ Example
 
 JSON Results
 ------------
-When retrieving a JSON formatted response from a GET request the data must be formatted as follows:
+When retrieving a JSON formatted response from a GET request the data must be
+formatted as follows:
 
     {
       "suggestions": [
@@ -90,20 +131,15 @@ When retrieving a JSON formatted response from a GET request the data must be fo
         { "name": "Arkansas" }
       ]
     }
-
-Demo
-----
-I have supplied a demo application which sits in /demo, along with the necessary libraries and HTML code I've added a Node.js server that will manage sending JSON data to backbone.suggestions.
-
-You can run the Node.js server from the command line:
-
-    cake demo
     
 Testing
 -------
-All of the tests are built using [Jasmine](http://pivotal.github.com/jasmine/) and [Mary](https://github.com/alexeypetrushin/mary). You can run the tests by launching /specs/SpecRunner.html in your browser after running the following commands:
+All of the tests are built using [Jasmine](http://pivotal.github.com/jasmine/)
+and [Mary](https://github.com/alexeypetrushin/mary). You can run the tests by
+launching /specs/SpecRunner.html in your browser after running the following
+commands:
 
-    cake build && cake spec
+    cake spec
 
 License
 -------

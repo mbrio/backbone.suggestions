@@ -1,0 +1,9 @@
+{
+    "name": "backbone.suggestions demo"
+  , "version": "1.0.0"
+  , "private": false
+  , "dependencies": {
+      "express": "2.5.1"
+    , "coffee-script": ">=1.1.3"
+  }
+}
