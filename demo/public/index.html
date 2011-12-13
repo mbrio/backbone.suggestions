@@ -66,8 +66,7 @@
     $(function() {
       sv = new Suggestions.View({
         el: $('input[type="text"].suggestions'),
-        ajax: { url: '/suggestions.json?q=:query' },
-        callbacks: { selected: function(val) { console.log(val); } }
+        ajax: { url: '/suggestions.json?q=:query' }
       });
     });
   </script>
