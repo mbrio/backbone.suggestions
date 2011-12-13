@@ -61,6 +61,7 @@ Options
   * `offsetLeft` = The number of pixels to offset the position of the popup to by the `left` CSS property, position starts at the bottom left corner of the input field. (default: 0)
   * `offsetTop` = The number of pixels to offset the position of the popup to by the `top` CSS property, position starts at the bottom left corner of the input field. (default: 0)
   * `selectedCssClass` = The CSS class that is applied to the `<li>` element that is selected. (default: 'selected')
+  * `enableForceClose` = Enables or disables auto-complete windows closing when the `esc` key is pressed. (default: true)
   * `selected` = The callback that is executed when a suggestion is selected.
   * `initiateSuggestion` = The callback that is executed at the beginning of a suggestion.
   * `suggesting` = The callback that is executed when the application begins the suggestion process. This callback only occurs if a suggestion can proceed, the only state it cannot proceed in is when the input field is blank.
