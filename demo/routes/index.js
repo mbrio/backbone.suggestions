@@ -10,7 +10,7 @@ exports.suggestions = function(req, res) {
    for(var i = 0, j = json.suggestions.length; i < j; i++)
    {
      var sug = json.suggestions[i];
-     if (sug.name.toLowerCase().indexOf(req.query.q) === 0)
+     if (sug.value.toLowerCase().indexOf(req.query.q) === 0)
      {
        output.suggestions[output.suggestions.length] = sug;
      }

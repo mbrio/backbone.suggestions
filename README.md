@@ -85,6 +85,9 @@ Options
         * `dataType` = The type of data that you're expecting back from the
           server.
           (default: 'json')
+    * `valueField` = The property of the JSON data that represents the textual
+      value of the data object.
+      (default: 'value')
     * `timeout` = Waiting period before asking for a suggestion.
       (default: 500)
     * `expiresIn` = The expiration duration of cached results.
@@ -155,7 +158,7 @@ for each of the templates must result in a function.
         default: _.template('<span class="message default">Begin typing for suggestions</span>'),
         loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>'),
         loadedList: _.template('<ol></ol>'),
-        loadedItem: _.template('<li><a href="#"><%= name %></a></li>'),
+        loadedItem: _.template('<li><a href="#"><%= value %></a></li>'),
         empty: _.template('<span class="message empty">No suggestions were found</span>'),
         error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
       }
@@ -168,17 +171,18 @@ JSON formatted responses must contain 1 object with a property called
 
     {
       "suggestions": [
-        { "name": "Alabama" },
-        { "name": "Alaska" },
-        { "name": "American Samoa" },
-        { "name": "Arizona" },
-        { "name": "Arkansas" }
+        { "value": "Alabama" },
+        { "value": "Alaska" },
+        { "value": "American Samoa" },
+        { "value": "Arizona" },
+        { "value": "Arkansas" }
       ]
     }
     
 Your suggestions do not have to contain the same data as above (i.e. a
-property called `name`); though if they contain fields different than above
-you must pass in a custom `templates.loadedItem` template.
+property called `value`); though if they contain fields different than above
+you must pass in a custom `templates.loadedItem` template, as well as the
+`valueField` option.
     
 Testing
 ---

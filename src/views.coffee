@@ -13,7 +13,7 @@ class SuggestionView extends Backbone.View
     default: _.template('<span class="message default">Begin typing for suggestions</span>')
     loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
     loadedList: _.template('<ol></ol>')
-    loadedItem: _.template('<li><a href="#"><%= name %></a></li>')
+    loadedItem: _.template('<li><a href="#"><%= value %></a></li>')
     empty: _.template('<span class="message empty">No suggestions were found</span>')
     error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
       
@@ -29,6 +29,7 @@ class SuggestionView extends Backbone.View
     enableForceClose: true
     templates: null
     callbacks: null
+    valueField: 'value'
     
   
   _onkeydown: (event) => @_keydown event
@@ -203,7 +204,7 @@ class SuggestionView extends Backbone.View
       
   ### Selects a value ###
   select: (val) ->
-    @el.val val
+    @el.val val[@options.valueField]
     @callbacks.selected? val
   
   ### Renders the template of the menu ###
@@ -215,12 +216,12 @@ class SuggestionView extends Backbone.View
       when 'loading' then @_menu.append @templates.loading()
       when 'loaded'
         list = $(@templates.loadedList());
-        list.append @templates.loadedItem(suggestion) for suggestion in parameters
+        list.append $(@templates.loadedItem(suggestion)).data('suggestion', suggestion) for suggestion in parameters
         @_menu.append list
           
         @_menu.find('> ol > li:first-child').addClass('selected')
         @_menu.find('> ol > li > a').click (event) =>
-          @select($(event.target).text())
+          @select $(event.target).parent().data('suggestion')
           
       when 'empty' then @_menu.append @templates.empty()
       when 'error' then @_menu.append @templates.error()

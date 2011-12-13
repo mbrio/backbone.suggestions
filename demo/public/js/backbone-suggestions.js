@@ -1,5 +1,5 @@
 /*
-backbone.suggestions.js 0.5.0
+backbone.suggestions.js 0.7.2
 Copyright (c) 2011 Michael Diolosa, @mbrio
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.5.0';
+  Suggestions.version = '0.7.2';
 
   KEYS = {
     UP: 38,
@@ -358,7 +358,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       "default": _.template('<span class="message default">Begin typing for suggestions</span>'),
       loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>'),
       loadedList: _.template('<ol></ol>'),
-      loadedItem: _.template('<li><a href="#"><%= name %></a></li>'),
+      loadedItem: _.template('<li><a href="#"><%= value %></a></li>'),
       empty: _.template('<span class="message empty">No suggestions were found</span>'),
       error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
     };
@@ -379,7 +379,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       selectedCssClass: 'selected',
       enableForceClose: true,
       templates: null,
-      callbacks: null
+      callbacks: null,
+      valueField: 'value'
     };
 
     SuggestionView.prototype._onkeydown = function(event) {
@@ -648,7 +649,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype.select = function(val) {
       var _base;
-      this.el.val(val);
+      this.el.val(val[this.options.valueField]);
       return typeof (_base = this.callbacks).selected === "function" ? _base.selected(val) : void 0;
     };
 
@@ -668,12 +669,12 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           list = $(this.templates.loadedList());
           for (_i = 0, _len = parameters.length; _i < _len; _i++) {
             suggestion = parameters[_i];
-            list.append(this.templates.loadedItem(suggestion));
+            list.append($(this.templates.loadedItem(suggestion)).data('suggestion', suggestion));
           }
           this._menu.append(list);
           this._menu.find('> ol > li:first-child').addClass('selected');
           return this._menu.find('> ol > li > a').click(function(event) {
-            return _this.select($(event.target).text());
+            return _this.select($(event.target).parent().data('suggestion'));
           });
         case 'empty':
           return this._menu.append(this.templates.empty());

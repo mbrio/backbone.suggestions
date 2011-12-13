@@ -30,7 +30,11 @@ generatedFiles = [
     'specs/*.js'
   ]
 
-task 'build', 'Compile CoffeeScript to JavaScript', ->
+task 'build', 'Compile all', ->
+  invoke 'uglify'
+  invoke 'docs'
+  
+task 'build-js', 'Compile CoffeeScript to JavaScript', ->
   libs = path.join __dirname, 'src'
   version = fs.readFileSync(path.join __dirname, 'VERSION').toString().trim()
   dir = path.join __dirname, 'lib'
@@ -58,7 +62,7 @@ task 'docs', 'Generate documentation', ->
   execute 'docco src/*.coffee'
   
 task 'uglify', 'Uglify the resulting application file after build', ->
-  invoke 'build'
+  invoke 'build-js'
   execute "uglifyjs #{output} > #{uglifyOutput}"
   
 task 'clean', 'Removes all generated files', ->
