@@ -193,7 +193,7 @@ commands:
 
     cake spec
     
-Upgrading From Version 0.5.0
+Upgrading To Version 0.7.0
 ---
 The major change is in the way that options are passed. The `url` option needs
 to be passed through the `ajax` property and all of the callback options need
@@ -213,9 +213,55 @@ to be passed through the `callbacks` property.
       el: $('input[type="text"].suggestions'),
       ajax: {
         url: '/suggestions.json?q=:query'
-      }
+      },
       callbacks: {
         selected: function() { console.log('selected'); }
+      }
+    });
+    
+Upgrading To Version 0.7.2
+---
+The `name` property is no longer the default value property of the returned
+JSON data, the new default value property name is `value`.
+
+**Before**
+
+    {
+      "suggestions": [
+        { "name": "Alabama" },
+        { "name": "Alaska" },
+        { "name": "American Samoa" },
+        { "name": "Arizona" },
+        { "name": "Arkansas" }
+      ]
+    }
+    
+**After**
+
+    {
+      "suggestions": [
+        { "value": "Alabama" },
+        { "value": "Alaska" },
+        { "value": "American Samoa" },
+        { "value": "Arizona" },
+        { "value": "Arkansas" }
+      ]
+    }
+  
+You can make the new code work with the old data by passing the following
+options to the view:
+
+    view = new Suggestions.View({
+      el: $('input[type="text"].suggestions'),
+      ajax: {
+        url: '/suggestions.json?q=:query'
+      },
+      valueField: 'name',
+      callbacks: {
+        selected: function() { console.log('selected'); }
+      },
+      templates: {
+        loadedItem: _.template('<li><a href="#"><%= name %></a></li>'),
       }
     });
 
