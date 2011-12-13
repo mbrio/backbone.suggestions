@@ -6,7 +6,6 @@ class SuggestionView extends Backbone.View
   _controller: null
   _menu: null
   _previousValue: null
-  _specified: null
   
   ### Templates that define the layout of the menu for each of it's states ###
   templates:
@@ -17,6 +16,10 @@ class SuggestionView extends Backbone.View
     loadedItem: _.template('<li><a href="#"><%= name %></a></li>')
     empty: _.template('<span class="message empty">No suggestions were found</span>')
     error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
+      
+  ### Event callbacks ###
+  callbacks:
+    selected: null
   
   ### Default options ###
   options:
@@ -25,9 +28,7 @@ class SuggestionView extends Backbone.View
     selectedCssClass: 'selected'
     enableForceClose: true
     templates: null
-    
-    ### Event callbacks ###
-    selected: null
+    callbacks: null
     
   
   _onkeydown: (event) => @_keydown event
@@ -38,16 +39,17 @@ class SuggestionView extends Backbone.View
   ### Initializes the object ###
   initialize: ->
     @el.attr 'autocomplete', 'off'
-    @_specified = _.clone @options
-    @templates = _.defaults @options.templates, @templates if @options?.templates?
+    @templates = _.clone _.defaults(@options.templates, @templates) if @options?.templates?
+    @callbacks = _.clone _.defaults(@options.callbacks, @callbacks) if @options?.callbacks?
     
-    @options.initiateSuggestion = => @_initiateSuggestion()
-    @options.suggesting = => @_suggesting()
-    @options.suggested = (cached) => @_suggested(cached)
-    @options.error = (jqXHR, textStatus, errorThrown) => @_error(jqXHR, textStatus, errorThrown)
-    @options.loading = => @_loading()
-    @options.enabled = => @_enabled()
-    @options.disabled = => @_disabled()
+    @options.callbacks =
+      initiateSuggestion: => @_initiateSuggestion()
+      suggesting: => @_suggesting()
+      suggested: (cached) => @_suggested(cached)
+      error: (jqXHR, textStatus, errorThrown) => @_error(jqXHR, textStatus, errorThrown)
+      loading: => @_loading()
+      enabled: => @_enabled()
+      disabled: => @_disabled()
 
     @_controller = new SuggestionController @el, @options
     
@@ -63,7 +65,7 @@ class SuggestionView extends Backbone.View
       blur: @_onblur
       focus: @_onfocus
       
-    @_specified?.enabled?()
+    @callbacks?.enabled?()
     
   _disabled: ->
     @el.blur()
@@ -74,7 +76,7 @@ class SuggestionView extends Backbone.View
       blur: @_onblur
       focus: @_onfocus
       
-    @_specified?.disabled?()
+    @callbacks?.disabled?()
     
   enable: ->
     @_controller.enable()
@@ -84,26 +86,26 @@ class SuggestionView extends Backbone.View
         
   ### Callback for when a suggestion is initialized ###
   _initiateSuggestion: ->
-    @_specified?.initiateSuggestion?()
+    @callbacks.initiateSuggestion?()
     @render 'default' unless @el.val()?.length > 0
 
   ### Callback for when a suggestion is processing ###
   _suggesting: ->
-    @_specified?.suggesting?()
+    @callbacks.suggesting?()
 
   _loading: ->
-    @_specified?.loading?()
+    @callbacks.loading?()
     @render 'loading'
         
   ### Callback for when a suggestions is completed ###
   _suggested: (cached) ->
-    @_specified?.suggested?(cached)
+    @callbacks.suggested?(cached)
     suggestions = cached.get('suggestions')
     if suggestions.length > 0 then @render 'loaded', suggestions else @render 'empty'
     
   ### Callback for when there is an AJAX error durion a suggestion ###
   _error: (jqXHR, textStatus, errorThrown) ->
-    @_specified?.error?(jqXHR, textStatus, errorThrown)
+    @callbacks.error?(jqXHR, textStatus, errorThrown)
     @render 'error'
     
   ### Manages user input ###
@@ -201,15 +203,8 @@ class SuggestionView extends Backbone.View
       
   ### Selects a value ###
   select: (val) ->
-    @el.val(val)
-    @options.selected?(val)
-    
-  ### Updates the position of the menu ###
-  #_position: ->
-    #offset = @el.offset()
-    #@_menu.css
-    #  left: offset.left + @options.offsetLeft
-    #  top: offset.top + @options.offsetTop
+    @el.val val
+    @callbacks.selected? val
   
   ### Renders the template of the menu ###
   render: (state, parameters) ->

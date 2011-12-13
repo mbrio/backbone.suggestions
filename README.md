@@ -75,47 +75,69 @@ Options
 ---
 * `@options` = The suggestions options (all Backbone.View options can be
   passed as well)
-  * `url` = The URL of the REST action, any reference to `:query` within the
-    string will be replaced by the text within the input box.
-    (default: '/suggestions?q=:query')
-  * `timeout` = Waiting period before asking for a suggestion.
-    (default: 500)
-  * `expiresIn` = The expiration duration of cached results.
-    (default: 0.5 days)
-  * `zIndex` = The z-index of the `<div>` containing element.
+    * `ajax` = The options passed to the $.ajax method, below describes the
+      default values, see the
+      [jQuery documentation](http://api.jquery.com/jQuery.ajax/) for more
+      information.
+        * `url` = The URL of the REST action, any reference to `:query` within
+          the string will be replaced by the text within the input box.
+          (default: '/suggestions?q=:query')
+        * `dataType` = The type of data that you're expecting back from the
+          server.
+          (default: 'json')
+    * `timeout` = Waiting period before asking for a suggestion.
       (default: 500)
-  * `cssClass` = The CSS class that is applied to the `<div>` containing
-    element.
-    (default: 'suggestions-menu')
-  * `offsetLeft` = The number of pixels to offset the position of the popup to
-    by the `left` CSS property, position starts at the bottom left corner of
-    the input field. (default: 0)
-  * `offsetTop` = The number of pixels to offset the position of the popup to
-    by the `top` CSS property, position starts at the bottom left corner of
-    the input field. (default: 0)
-  * `selectedCssClass` = The CSS class that is applied to the `<li>` element
-    that is selected. (default: 'selected')
-  * `enableForceClose` = Enables or disables auto-complete windows closing
-    when the `esc` key is pressed. (default: true)
-  * `selected` = The callback that is executed when a suggestion is selected.
-  * `initiateSuggestion` = The callback that is executed at the beginning of a
-    suggestion.
-  * `suggesting` = The callback that is executed when the application begins
-    the suggestion process. This callback only occurs if a suggestion can
-    proceed, the only state it cannot proceed in is when the input field is
-    blank.
-  * `suggested` = The callback that is executed when suggestions are
-    displayed.
-  * `loading` = The callback that is executed when a remote call is loading.
-  * `error` = The callback that is executed when an AJAX error occurs.
-  * `enabled` = The callback that is executed when the view is enabled.
-  * `disabled` = The callback that is executed when the view is disabled.
+    * `expiresIn` = The expiration duration of cached results.
+      (default: 0.5 days)
+    * `zIndex` = The z-index of the `<div>` containing element.
+        (default: 500)
+    * `cssClass` = The CSS class that is applied to the `<div>` containing
+      element.
+      (default: 'suggestions-menu')
+    * `offsetLeft` = The number of pixels to offset the position of the popup
+      to by the `left` CSS property, position starts at the bottom left corner
+      of the input field. (default: 0)
+    * `offsetTop` = The number of pixels to offset the position of the popup
+      to by the `top` CSS property, position starts at the bottom left corner
+      of the input field. (default: 0)
+    * `selectedCssClass` = The CSS class that is applied to the `<li>` element
+      that is selected. (default: 'selected')
+    * `enableForceClose` = Enables or disables auto-complete windows closing
+      when the `esc` key is pressed. (default: true)
+    * `callbacks` = The object containing all of the custom callbacks
+        * `selected` = The callback that is executed when a suggestion is
+          selected.
+        * `initiateSuggestion` = The callback that is executed at the
+          beginning of a suggestion.
+        * `suggesting` = The callback that is executed when the application
+          begins the suggestion process. This callback only occurs if a
+          suggestion can proceed, the only state it cannot proceed in is when
+          the input field is blank.
+        * `suggested` = The callback that is executed when suggestions are
+          displayed.
+        * `loading` = The callback that is executed when a remote call is
+          loading.
+        * `error` = The callback that is executed when an AJAX error occurs.
+        * `enabled` = The callback that is executed when the view is enabled.
+        * `disabled` = The callback that is executed when the view is
+          disabled.
+    * `templates` = The object containing all of the custom templates
+        * `default` = The popup content when no text is filled within the
+          input
+        * `loading` = The popup content when data is loading
+        * `loadedList` = The parent list object that will contain the list
+          items
+        * `loadedItem` = The list item
+        * `empty` = The popup content when there are no results found
+        * `error` = The popup content when an error occurred
   
 Example
 ---
     view = new Suggestions.View({
       el: $('input[type="text"].suggestions'),
-      url: '/suggestions.json?q=:query'
+      ajax: {
+        url: '/suggestions.json?q=:query'
+      }
     });
       
 Templates
@@ -164,6 +186,32 @@ launching /specs/SpecRunner.html in your browser after running the following
 commands:
 
     cake spec
+    
+Upgrading From Version 0.5.0
+---
+The major change is in the way that options are passed. The `url` option needs
+to be passed through the `ajax` property and all of the callback options need
+to be passed through the `callbacks` property.
+
+**Before**
+
+    view = new Suggestions.View({
+      el: $('input[type="text"].suggestions'),
+      url: '/suggestions.json?q=:query',
+      selected: function() { console.log('selected'); }
+    });
+    
+**After**
+
+    view = new Suggestions.View({
+      el: $('input[type="text"].suggestions'),
+      ajax: {
+        url: '/suggestions.json?q=:query'
+      }
+      callbacks: {
+        selected: function() { console.log('selected'); }
+      }
+    });
 
 License
 ---

@@ -2,7 +2,9 @@
 class SuggestionController  
   ### Initializes the object ###
   constructor: (@el, options) ->
-    @options = _.defaults options, @options
+    @options = _.defaults _.clone(options), @options
+    @callbacks = _.defaults _.clone(@options.callbacks), @callbacks if @options?.callbacks?
+    @ajax = _.defaults _.clone(@options.ajax), @ajax if @options?.ajax?
     if @options.enable ? true then @enable() else @disable()
 
     @_load()
@@ -14,11 +16,11 @@ class SuggestionController
   
   ### Default options ###
   options:
-    url: '/suggestions?q=:query'
     timeout: 500
     expiresIn: 1000 * 60 * 60 * 12
     
-    ### Event callbacks ###
+  ### Event callbacks ###
+  callbacks:
     initiateSuggestion: null
     suggesting: null
     suggested: null
@@ -26,6 +28,11 @@ class SuggestionController
     error: null
     enabled: null
     disabled: null
+  
+  ### AJAX options ###
+  ajax:
+    url: '/suggestions?q=:query'
+    dataType: 'json'
     
   is_enabled: ->
     @_enabled
@@ -34,23 +41,23 @@ class SuggestionController
     return if @_enabled
     @halt()
     @_enabled = true
-    @options.enabled?()
+    @callbacks.enabled?()
   
   disable: ->
     return unless @_enabled
     @halt()
     @_enabled = false
-    @options.disabled?()
+    @callbacks.disabled?()
     
   ### Initializes a suggestion ###
   suggest: ->
     return unless @is_enabled()
     
-    @options.initiateSuggestion?()
+    @callbacks.initiateSuggestion?()
     @halt();
 
     if @el.val()
-      @options.suggesting?()
+      @callbacks.suggesting?()
       @_timeout = setTimeout @_suggestionMethod(@el.val()), (@options.timeout)
     
   ### Halts any AJAX requests and timeouts ###
@@ -60,7 +67,7 @@ class SuggestionController
 
   ### Determines whether to use locally cached or remotely called data ###
   _suggestionMethod: (key) ->
-    key = (@options.url).replace ':query', key.toLowerCase()
+    key = (@ajax.url).replace ':query', key.toLowerCase()
     
     cached = @_findCache(key)
     
@@ -68,21 +75,27 @@ class SuggestionController
     
   ### Complete suggestion with local data ###
   _local: (cached) ->    
-    @options.suggested?(cached)
+    @callbacks.suggested?(cached)
     
   ### Retrieve remote data and cache it prior to completing suggestion with
       local data ###
   _ajax: (key) ->
-    @options.loading?()
-    @_request = $.ajax
+    @callbacks.loading?()
+
+    ajaxOptions =
       url: key
-      dataType: 'json'
       success: (data) =>
         @_request = null
-        
+      
         @_processAjax key.toLowerCase(), data?.suggestions
+        @ajax.success? data
       error: (jqXHR, textStatus, errorThrown) =>
-        @options.error?(jqXHR, textStatus, errorThrown)
+        @callbacks.error? jqXHR, textStatus, errorThrown
+        @ajax.error? jqXHR, textStatus, errorThrow
+        
+    ajaxOptions = _.defaults ajaxOptions, @ajax
+    @callbacks = _.defaults @options.callbacks, @callbacks if @options?.callbacks?
+    @_request = $.ajax ajaxOptions
         
   ### Process the retrieved data prior to completing the suggestion with local
       data ###
