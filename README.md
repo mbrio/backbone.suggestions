@@ -167,5 +167,7 @@ commands:
 
 License
 ---
+Copyright (c) 2011 Michael Diolosa, [@mbrio](http://twitter.com/mbrio)
+
 The backbone.suggestions.js library is licensed under the MIT license. For
 more information see the [Wiki](https://github.com/mbrio/backbone.suggestions/wiki/License).
