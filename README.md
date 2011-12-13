@@ -148,7 +148,9 @@ for each of the templates must result in a function.
  
     view = new Suggestions.View({
       el: $('input[type="text"].suggestions'),
-      url: '/suggestions.json?q=:query',
+      ajax: {
+        url: '/suggestions.json?q=:query'
+      },
       templates: {
         default: _.template('<span class="message default">Begin typing for suggestions</span>'),
         loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>'),
