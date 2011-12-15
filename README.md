@@ -85,6 +85,8 @@ Options
         * `dataType` = The type of data that you're expecting back from the
           server.
           (default: 'json')
+    * `cache` = Enables or disables caching results in localStorage
+       (default: true)
     * `valueField` = The property of the JSON data that represents the textual
       value of the data object.
       (default: 'value')

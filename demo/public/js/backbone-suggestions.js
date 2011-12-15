@@ -108,7 +108,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionController.prototype.options = {
       timeout: 500,
-      expiresIn: 1000 * 60 * 60 * 12
+      expiresIn: 1000 * 60 * 60 * 12,
+      cache: true
     };
 
     /* Event callbacks
@@ -249,8 +250,10 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         version: Suggestions.version,
         suggestions: suggestions
       });
-      this._cache.add(cached);
-      this._save();
+      if (this.options.cache) {
+        this._cache.add(cached);
+        this._save();
+      }
       return this._local(cached);
     };
 
@@ -265,7 +268,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionController.prototype._save = function() {
-      return localStorage.setItem(this._cacheKey, JSON.stringify(this._cache));
+      if (this.options.cache) {
+        return localStorage.setItem(this._cacheKey, JSON.stringify(this._cache));
+      }
     };
 
     /* Load the data from localStorage, if there is a JSON parsing exception
@@ -274,11 +279,15 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionController.prototype._load = function() {
       var json, _ref;
-      json = localStorage.getItem(this._cacheKey);
-      try {
-        return this._cache = (_ref = new CacheCollection(this._parse(json))) != null ? _ref : new CacheCollection;
-      } catch (error) {
-        localStorage.removeItem(this._cacheKey);
+      if (this.options.cache) {
+        json = localStorage.getItem(this._cacheKey);
+        try {
+          return this._cache = (_ref = new CacheCollection(this._parse(json))) != null ? _ref : new CacheCollection;
+        } catch (error) {
+          localStorage.removeItem(this._cacheKey);
+          return this._cache = new CacheCollection;
+        }
+      } else {
         return this._cache = new CacheCollection;
       }
     };

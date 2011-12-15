@@ -18,6 +18,7 @@ class SuggestionController
   options:
     timeout: 500
     expiresIn: 1000 * 60 * 60 * 12
+    cache: true
     
   ### Event callbacks ###
   callbacks:
@@ -70,7 +71,7 @@ class SuggestionController
     key = (@ajax.url).replace ':query', key.toLowerCase()
     
     cached = @_findCache(key)
-    
+  
     if cached? then () => @_local(cached) else () => @_ajax(key)
     
   ### Complete suggestion with local data ###
@@ -106,8 +107,9 @@ class SuggestionController
       version: Suggestions.version
       suggestions: suggestions
         
-    @_cache.add cached
-    @_save()
+    if @options.cache
+      @_cache.add cached
+      @_save()
     
     @_local(cached)
     
@@ -117,18 +119,22 @@ class SuggestionController
   ### TODO: Would like to move this to the Backbone localStorage mechanism of
       the collection ###
   _save: ->
-    localStorage.setItem @_cacheKey, JSON.stringify(@_cache)
+    if @options.cache
+      localStorage.setItem @_cacheKey, JSON.stringify(@_cache)
     
   ### Load the data from localStorage, if there is a JSON parsing exception
       create a new data collection ###
   _load: ->
-    json = localStorage.getItem @_cacheKey
+    if @options.cache
+      json = localStorage.getItem @_cacheKey
     
-    # If a JSON parse error occurs reset the localStorage
-    try
-      @_cache = new CacheCollection(@_parse(json)) ? new CacheCollection
-    catch error
-      localStorage.removeItem @_cacheKey
+      # If a JSON parse error occurs reset the localStorage
+      try
+        @_cache = new CacheCollection(@_parse(json)) ? new CacheCollection
+      catch error
+        localStorage.removeItem @_cacheKey
+        @_cache = new CacheCollection
+    else
       @_cache = new CacheCollection
     
   ### Parse the stored JSON data, ensure dates are properly deserialized ###
