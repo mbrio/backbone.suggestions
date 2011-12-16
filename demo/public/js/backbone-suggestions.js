@@ -653,6 +653,13 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       });
     };
 
+    /* Passes halt to the _controller property
+    */
+
+    SuggestionView.prototype.halt = function() {
+      return this._controller.halt();
+    };
+
     /* Selects a value
     */
 

@@ -202,6 +202,10 @@ class SuggestionView extends Backbone.View
     @_menu.fadeOut
       duration: 200
       
+  ### Passes halt to the _controller property ###
+  halt: ->
+    @_controller.halt();
+      
   ### Selects a value ###
   select: (val) ->
     @el.val val[@options.valueField]
