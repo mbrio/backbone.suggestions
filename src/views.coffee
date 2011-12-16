@@ -221,6 +221,7 @@ class SuggestionView extends Backbone.View
           
         @_menu.find('> ol > li:first-child').addClass('selected')
         @_menu.find('> ol > li > a').click (event) =>
+          event.preventDefault();
           @select $(event.target).parent().data('suggestion')
           
       when 'empty' then @_menu.append @templates.empty()

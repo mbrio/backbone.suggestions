@@ -1,5 +1,5 @@
 /*
-backbone.suggestions.js 0.7.2
+backbone.suggestions.js 0.7.3
 Copyright (c) 2011 Michael Diolosa, @mbrio
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.7.2';
+  Suggestions.version = '0.7.3';
 
   KEYS = {
     UP: 38,
@@ -683,6 +683,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           this._menu.append(list);
           this._menu.find('> ol > li:first-child').addClass('selected');
           return this._menu.find('> ol > li > a').click(function(event) {
+            event.preventDefault();
             return _this.select($(event.target).parent().data('suggestion'));
           });
         case 'empty':
