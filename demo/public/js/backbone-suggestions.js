@@ -1,5 +1,5 @@
 /*
-backbone.suggestions.js 0.7.3
+backbone.suggestions.js 0.7.4
 Copyright (c) 2011 Michael Diolosa, @mbrio
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.7.3';
+  Suggestions.version = '0.7.4';
 
   KEYS = {
     UP: 38,
