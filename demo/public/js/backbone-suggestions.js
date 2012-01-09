@@ -1,6 +1,6 @@
 /*
-backbone.suggestions.js 0.7.4
-Copyright (c) 2011 Michael Diolosa, @mbrio
+backbone.suggestions.js 0.7.5
+Copyright (c) 2011-2012 Michael Diolosa, <michael.diolosa@gmail.com>
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
 https://github.com/mbrio/backbone.suggestions/wiki/License
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.7.4';
+  Suggestions.version = '0.7.5';
 
   KEYS = {
     UP: 38,
@@ -109,7 +109,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionController.prototype.options = {
       timeout: 500,
       expiresIn: 1000 * 60 * 60 * 12,
-      cache: true
+      cache: true,
+      lengthThreshold: 3
     };
 
     /* Event callbacks
@@ -122,7 +123,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       loading: null,
       error: null,
       enabled: null,
-      disabled: null
+      disabled: null,
+      checkingLengthThreshold: null
     };
 
     /* AJAX options
@@ -135,6 +137,14 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionController.prototype.is_enabled = function() {
       return this._enabled;
+    };
+
+    SuggestionController.prototype.can_suggest = function() {
+      return this.is_enabled() && this.meets_length_threshold();
+    };
+
+    SuggestionController.prototype.meets_length_threshold = function() {
+      return this.el.val().length >= this.options.lengthThreshold;
     };
 
     SuggestionController.prototype.enable = function() {
@@ -157,15 +167,18 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionController.prototype.suggest = function() {
-      var _base, _base2;
-      if (!this.is_enabled()) return;
-      if (typeof (_base = this.callbacks).initiateSuggestion === "function") {
-        _base.initiateSuggestion();
+      var _base, _base2, _base3;
+      if (typeof (_base = this.callbacks).checkingLengthThreshold === "function") {
+        _base.checkingLengthThreshold(this.meets_length_threshold());
+      }
+      if (!this.can_suggest()) return;
+      if (typeof (_base2 = this.callbacks).initiateSuggestion === "function") {
+        _base2.initiateSuggestion();
       }
       this.halt();
       if (this.el.val()) {
-        if (typeof (_base2 = this.callbacks).suggesting === "function") {
-          _base2.suggesting();
+        if (typeof (_base3 = this.callbacks).suggesting === "function") {
+          _base3.suggesting();
         }
         return this._timeout = setTimeout(this._suggestionMethod(this.el.val()), this.options.timeout);
       }
@@ -425,6 +438,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         initiateSuggestion: function() {
           return _this._initiateSuggestion();
         },
+        checkingLengthThreshold: function(does_meet) {
+          return _this._checkingLengthThreshold(does_meet);
+        },
         suggesting: function() {
           return _this._suggesting();
         },
@@ -481,6 +497,18 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype.disable = function() {
       return this._controller.disable();
+    };
+
+    /* Callback for when the controller is checking the length threshold prior
+        to making a suggestion
+    */
+
+    SuggestionView.prototype._checkingLengthThreshold = function(does_meet) {
+      var _base;
+      if (typeof (_base = this.callbacks).checkingLengthThreshold === "function") {
+        _base.checkingLengthThreshold(does_meet);
+      }
+      if (!does_meet) return this.render('default');
     };
 
     /* Callback for when a suggestion is initialized

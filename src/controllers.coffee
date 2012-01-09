@@ -19,6 +19,7 @@ class SuggestionController
     timeout: 500
     expiresIn: 1000 * 60 * 60 * 12
     cache: true
+    lengthThreshold: 3
     
   ### Event callbacks ###
   callbacks:
@@ -29,6 +30,7 @@ class SuggestionController
     error: null
     enabled: null
     disabled: null
+    checkingLengthThreshold: null
   
   ### AJAX options ###
   ajax:
@@ -37,6 +39,12 @@ class SuggestionController
     
   is_enabled: ->
     @_enabled
+    
+  can_suggest: ->
+    @is_enabled() && @meets_length_threshold()
+    
+  meets_length_threshold: ->
+    @el.val().length >= @options.lengthThreshold
     
   enable: ->
     return if @_enabled
@@ -52,7 +60,8 @@ class SuggestionController
     
   ### Initializes a suggestion ###
   suggest: ->
-    return unless @is_enabled()
+    @callbacks.checkingLengthThreshold?(@meets_length_threshold())
+    return unless @can_suggest()
     
     @callbacks.initiateSuggestion?()
     @halt();

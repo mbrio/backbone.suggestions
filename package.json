@@ -1,9 +1,13 @@
 {
   "name"          : "backbone.suggestions",
   "description"   : "An autocompletion view for Backbone.js",
-  "version"       : "1.0.0",
+  "version"       : "0.7.5",
   "keywords"      : [],
-  "maintainers"   : [{ "name": "Michael Diolosa", "twitter": "@mbrio" }],
+  "maintainers"   : [{ 
+    "name": "Michael Diolosa",
+    "email": "michael.diolosa@gmail.com",
+    "twitter": "@mbrio"
+  }],
   "contributors"  : [],
   "bugs"          : "https://github.com/mbrio/backbone.suggestions/issues",
   "licenses"      : [{ "type": "MIT", "url": "http://www.opensource.org/licenses/mit-license.php" }],

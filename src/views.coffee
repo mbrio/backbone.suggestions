@@ -45,6 +45,7 @@ class SuggestionView extends Backbone.View
     
     @options.callbacks =
       initiateSuggestion: => @_initiateSuggestion()
+      checkingLengthThreshold: (does_meet) => @_checkingLengthThreshold(does_meet)
       suggesting: => @_suggesting()
       suggested: (cached) => @_suggested(cached)
       error: (jqXHR, textStatus, errorThrown) => @_error(jqXHR, textStatus, errorThrown)
@@ -84,7 +85,13 @@ class SuggestionView extends Backbone.View
         
   disable: ->
     @_controller.disable()
-        
+
+  ### Callback for when the controller is checking the length threshold prior
+      to making a suggestion ###
+  _checkingLengthThreshold: (does_meet) ->
+    @callbacks.checkingLengthThreshold?(does_meet)
+    @render 'default' unless does_meet
+    
   ### Callback for when a suggestion is initialized ###
   _initiateSuggestion: ->
     @callbacks.initiateSuggestion?()

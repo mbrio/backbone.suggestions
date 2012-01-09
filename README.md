@@ -86,7 +86,10 @@ Options
           server.
           (default: 'json')
     * `cache` = Enables or disables caching results in localStorage
-       (default: true)
+      (default: true)
+    * `lengthThreshold` = Determines how many characters are need in order to
+      begin suggesting.
+      (default: 3)
     * `valueField` = The property of the JSON data that represents the textual
       value of the data object.
       (default: 'value')
@@ -126,6 +129,11 @@ Options
         * `enabled` = The callback that is executed when the view is enabled.
         * `disabled` = The callback that is executed when the view is
           disabled.
+        * `checkingLengthThreshold(does_meet)` = The callback that is executed
+          when the controller checks the length threshold prior to determining
+          whether a suggestion is to be executed. A value describing whether
+          the field does meet the length threshold is passed as the callback's
+          only argument.
     * `templates` = The object containing all of the custom templates
         * `default` = The popup content when no text is filled within the
           input
