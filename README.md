@@ -277,7 +277,7 @@ options to the view:
 
 License
 ---
-Copyright (c) 2011 Michael Diolosa, [@mbrio](http://twitter.com/mbrio)
+Copyright (c) 2011-2012 Michael Diolosa <[michael.diolosa@gmail.com](michael.diolosa@gmail.com)>
 
 The backbone.suggestions.js library is licensed under the MIT license. For
 more information see the [Wiki](https://github.com/mbrio/backbone.suggestions/wiki/License).
