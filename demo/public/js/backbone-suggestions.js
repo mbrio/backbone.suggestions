@@ -701,7 +701,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype.render = function(state, parameters) {
-      var list, suggestion, _i, _len;
+      var container, list, suggestion, _i, _len;
       var _this = this;
       this._menu.empty();
       switch (state) {
@@ -711,13 +711,16 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           return this._menu.append(this.templates.loading());
         case 'loaded':
           list = $(this.templates.loadedList());
-          for (_i = 0, _len = parameters.length; _i < _len; _i++) {
-            suggestion = parameters[_i];
-            list.append($(this.templates.loadedItem(suggestion)).data('suggestion', suggestion));
+          if (list.size() > 0) {
+            container = list.first();
+            for (_i = 0, _len = parameters.length; _i < _len; _i++) {
+              suggestion = parameters[_i];
+              container.append($(this.templates.loadedItem(suggestion)).data('suggestion', suggestion));
+            }
           }
           this._menu.append(list);
-          this._menu.find('> ol > li:first-child').addClass('selected');
-          return this._menu.find('> ol > li > a').click(function(event) {
+          this._menu.find('> :first-child > li:first-child').addClass('selected');
+          return this._menu.find('> :first-child > li > a').click(function(event) {
             event.preventDefault();
             return _this.select($(event.target).parent().data('suggestion'));
           });
