@@ -229,14 +229,17 @@ class SuggestionView extends Backbone.View
         list = $(@templates.loadedList());
         if list.size() > 0
           container = list.first()
-          container.append $(@templates.loadedItem(suggestion)).data('suggestion', suggestion) for suggestion in parameters
+          for suggestion in parameters
+            li = $(@templates.loadedItem(suggestion))
+            li.find('a').data('suggestion', suggestion)
+            container.append(li)
         
         @_menu.append list
           
         @_menu.find('> :first-child > li:first-child').addClass('selected')
         @_menu.find('> :first-child > li > a').click (event) =>
           event.preventDefault();
-          @select $(event.target).parent().data('suggestion')
+          @select $(event.currentTarget).data('suggestion')
           
       when 'empty' then @_menu.append @templates.empty()
       when 'error' then @_menu.append @templates.error()
