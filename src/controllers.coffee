@@ -101,7 +101,7 @@ class SuggestionController
         @ajax.success? data
       error: (jqXHR, textStatus, errorThrown) =>
         @callbacks.error? jqXHR, textStatus, errorThrown
-        @ajax.error? jqXHR, textStatus, errorThrow
+        @ajax.error? jqXHR, textStatus, errorThrown
         
     ajaxOptions = _.defaults ajaxOptions, @ajax
     @callbacks = _.defaults @options.callbacks, @callbacks if @options?.callbacks?
