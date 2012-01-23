@@ -126,6 +126,8 @@ Options
         * `loading` = The callback that is executed when a remote call is
           loading.
         * `error` = The callback that is executed when an AJAX error occurs.
+        * `abort` = The callback that is executed when the AJAX error is an
+          abort.
         * `enabled` = The callback that is executed when the view is enabled.
         * `disabled` = The callback that is executed when the view is
           disabled.

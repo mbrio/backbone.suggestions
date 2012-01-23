@@ -20,6 +20,7 @@ class SuggestionView extends Backbone.View
   ### Event callbacks ###
   callbacks:
     selected: null
+    abort: null
   
   ### Default options ###
   options:
@@ -113,8 +114,12 @@ class SuggestionView extends Backbone.View
     
   ### Callback for when there is an AJAX error durion a suggestion ###
   _error: (jqXHR, textStatus, errorThrown) ->
-    @callbacks.error?(jqXHR, textStatus, errorThrown)
-    @render 'error'
+    if (textStatus != 'abort')
+      @callbacks.error?(jqXHR, textStatus, errorThrown)
+      @render 'error'
+    else
+      @callbacks.abort?(jqXHR, textStatus, errorThrown)
+      @render 'default'
     
   ### Manages user input ###
   _keydown: (event) ->
