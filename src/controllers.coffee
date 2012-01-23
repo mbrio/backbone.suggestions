@@ -60,11 +60,11 @@ class SuggestionController
     
   ### Initializes a suggestion ###
   suggest: ->
+    @halt();
     @callbacks.checkingLengthThreshold?(@meets_length_threshold())
     return unless @can_suggest()
     
     @callbacks.initiateSuggestion?()
-    @halt();
 
     if @el.val()
       @callbacks.suggesting?()
