@@ -1,5 +1,5 @@
 /*
-backbone.suggestions.js 0.7.5
+backbone.suggestions.js 0.8.0
 Copyright (c) 2011-2012 Michael Diolosa, <michael.diolosa@gmail.com>
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.7.5';
+  Suggestions.version = '0.8.0';
 
   KEYS = {
     UP: 38,
@@ -168,6 +168,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionController.prototype.suggest = function() {
       var _base, _base2, _base3;
+      this.halt();
       if (typeof (_base = this.callbacks).checkingLengthThreshold === "function") {
         _base.checkingLengthThreshold(this.meets_length_threshold());
       }
@@ -175,7 +176,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       if (typeof (_base2 = this.callbacks).initiateSuggestion === "function") {
         _base2.initiateSuggestion();
       }
-      this.halt();
       if (this.el.val()) {
         if (typeof (_base3 = this.callbacks).suggesting === "function") {
           _base3.suggesting();
@@ -241,7 +241,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           if (typeof (_base2 = _this.callbacks).error === "function") {
             _base2.error(jqXHR, textStatus, errorThrown);
           }
-          return typeof (_base3 = _this.ajax).error === "function" ? _base3.error(jqXHR, textStatus, errorThrow) : void 0;
+          return typeof (_base3 = _this.ajax).error === "function" ? _base3.error(jqXHR, textStatus, errorThrown) : void 0;
         }
       };
       ajaxOptions = _.defaults(ajaxOptions, this.ajax);
@@ -376,11 +376,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype.templates = {
-      container: _.template('<div></div>'),
+      container: _.template('<div class="<%= cssClass %>"></div>'),
       "default": _.template('<span class="message default">Begin typing for suggestions</span>'),
       loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>'),
-      loadedList: _.template('<ol></ol>'),
-      loadedItem: _.template('<li><a href="#"><%= value %></a></li>'),
+      loadedList: _.template('<ol class="<%= cssClass %>"></ol>'),
+      loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>'),
       empty: _.template('<span class="message empty">No suggestions were found</span>'),
       error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
     };
@@ -389,7 +389,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype.callbacks = {
-      selected: null
+      selected: null,
+      abort: null
     };
 
     /* Default options
@@ -398,6 +399,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionView.prototype.options = {
       zIndex: 500,
       cssClass: 'suggestions-menu',
+      loadedListCssClass: 'suggestions-loaded-list',
+      listItemCssClass: 'suggestions-list-item',
+      listItemActionCssClass: 'suggestions-list-item-action',
       selectedCssClass: 'selected',
       enableForceClose: true,
       templates: null,
@@ -558,11 +562,18 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype._error = function(jqXHR, textStatus, errorThrown) {
-      var _base;
-      if (typeof (_base = this.callbacks).error === "function") {
-        _base.error(jqXHR, textStatus, errorThrown);
+      var _base, _base2;
+      if (textStatus !== 'abort') {
+        if (typeof (_base = this.callbacks).error === "function") {
+          _base.error(jqXHR, textStatus, errorThrown);
+        }
+        return this.render('error');
+      } else {
+        if (typeof (_base2 = this.callbacks).abort === "function") {
+          _base2.abort(jqXHR, textStatus, errorThrown);
+        }
+        return this.render('default');
       }
-      return this.render('error');
     };
 
     /* Manages user input
@@ -575,7 +586,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         case KEYS.UP:
           if (!this._menuVisible) return;
           event.preventDefault();
-          selected = this._menu.find("li." + this.options.selectedCssClass);
+          selected = this._menu.find("." + this.options.listItemCssClass + "." + this.options.selectedCssClass);
           if ((selected != null ? selected.size() : void 0) > 0 && (selected != null ? selected.prev().length : void 0) > 0) {
             selected.removeClass(this.options.selectedCssClass);
             return selected.prev().addClass(this.options.selectedCssClass);
@@ -584,7 +595,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         case KEYS.DOWN:
           if (!this._menuVisible) return;
           event.preventDefault();
-          selected = this._menu.find("li." + this.options.selectedCssClass);
+          selected = this._menu.find("." + this.options.listItemCssClass + "." + this.options.selectedCssClass);
           if ((selected != null ? selected.size() : void 0) > 0 && (selected != null ? selected.next().length : void 0) > 0) {
             selected.removeClass(this.options.selectedCssClass);
             return selected.next().addClass(this.options.selectedCssClass);
@@ -593,7 +604,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         case KEYS.ENTER:
           if (!this._menuVisible) return;
           event.preventDefault();
-          selected = this._menu.find("li." + this.options.selectedCssClass + " a");
+          selected = this._menu.find("." + this.options.listItemCssClass + "." + this.options.selectedCssClass + " a");
           if ((selected != null ? selected.get(0) : void 0) != null) {
             selected.click();
             return this.hide();
@@ -649,7 +660,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype._generateMenu = function() {
-      this._menu = $(this.templates.container()).addClass(this.options.cssClass).css({
+      this._menu = $(this.templates.container({
+        cssClass: this.options.cssClass
+      })).css({
         display: 'none'
       });
       return this.el.parent().append(this._menu);
@@ -701,7 +714,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype.render = function(state, parameters) {
-      var container, list, suggestion, _i, _len;
+      var container, li, list, suggestion, _i, _len;
       var _this = this;
       this._menu.empty();
       switch (state) {
@@ -710,19 +723,25 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         case 'loading':
           return this._menu.append(this.templates.loading());
         case 'loaded':
-          list = $(this.templates.loadedList());
+          list = $(this.templates.loadedList({
+            cssClass: this.options.loadedListCssClass
+          }));
           if (list.size() > 0) {
             container = list.first();
             for (_i = 0, _len = parameters.length; _i < _len; _i++) {
               suggestion = parameters[_i];
-              container.append($(this.templates.loadedItem(suggestion)).data('suggestion', suggestion));
+              suggestion.cssClass = this.options.listItemCssClass;
+              suggestion.actionCssClass = this.options.listItemActionCssClass;
+              li = $(this.templates.loadedItem(suggestion));
+              li.find("." + this.options.listItemActionCssClass).data('suggestion', suggestion);
+              container.append(li);
             }
           }
           this._menu.append(list);
-          this._menu.find('> :first-child > li:first-child').addClass('selected');
-          return this._menu.find('> :first-child > li > a').click(function(event) {
+          list.find("." + this.options.listItemCssClass + ":first-child").addClass('selected');
+          return this._menu.find("." + this.options.listItemActionCssClass).click(function(event) {
             event.preventDefault();
-            return _this.select($(event.target).parent().data('suggestion'));
+            return _this.select($(event.currentTarget).data('suggestion'));
           });
         case 'empty':
           return this._menu.append(this.templates.empty());

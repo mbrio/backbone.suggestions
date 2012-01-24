@@ -99,9 +99,17 @@ Options
       (default: 0.5 days)
     * `zIndex` = The z-index of the `<div>` containing element.
         (default: 500)
-    * `cssClass` = The CSS class that is applied to the `<div>` containing
-      element.
+    * `cssClass` = The CSS class that is applied to the containing element.
       (default: 'suggestions-menu')
+    * `loadedListCssClass` = The CSS class that is applied to the list
+      element.
+      (default: 'suggestions-loaded-list')
+    * `listItemCssClass` = The CSS class that is applied to each list item.
+      (default: 'suggestions-list-item')
+    * `listItemActionCssClass` = The CSS class that is applied to each item
+      in the list that emits the click event, in the default template it's
+      applied to an anchor (<a>) tag.
+      (default: 'suggestions-list-item-action')
     * `offsetLeft` = The number of pixels to offset the position of the popup
       to by the `left` CSS property, position starts at the bottom left corner
       of the input field. (default: 0)
@@ -167,11 +175,12 @@ for each of the templates must result in a function.
         url: '/suggestions.json?q=:query'
       },
       templates: {
-        default: _.template('<span class="message default">Begin typing for suggestions</span>'),
-        loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>'),
-        loadedList: _.template('<ol></ol>'),
-        loadedItem: _.template('<li><a href="#"><%= value %></a></li>'),
-        empty: _.template('<span class="message empty">No suggestions were found</span>'),
+        container: _.template('<div class="<%= cssClass %>"></div>')
+        default: _.template('<span class="message default">Begin typing for suggestions</span>')
+        loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
+        loadedList: _.template('<ol class="<%= cssClass %>"></ol>')
+        loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>')
+        empty: _.template('<span class="message empty">No suggestions were found</span>')
         error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
       }
     });
@@ -273,9 +282,36 @@ options to the view:
         selected: function() { console.log('selected'); }
       },
       templates: {
-        loadedItem: _.template('<li><a href="#"><%= name %></a></li>'),
+        loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= name %></a></li>'),
       }
     });
+
+Upgrading to Version 0.7.11
+---
+The templates now rely on CSS classes for selecting the elements of the
+template. This should make the templates much more flexible. Any custom
+templates made for previous versions of the backbone.suggestions.js view must
+be converted to the new template structure.
+
+** Before **
+
+   container: _.template('<div></div>')
+   default: _.template('<span class="message default">Begin typing for suggestions</span>')
+   loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
+   loadedList: _.template('<ol></ol>')
+   loadedItem: _.template('<li><a href="#"><%= value %></a></li>')
+   empty: _.template('<span class="message empty">No suggestions were found</span>')
+   error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
+
+** After **
+
+   container: _.template('<div class="<%= cssClass %>"></div>')
+   default: _.template('<span class="message default">Begin typing for suggestions</span>')
+   loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
+   loadedList: _.template('<ol class="<%= cssClass %>"></ol>')
+   loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>')
+   empty: _.template('<span class="message empty">No suggestions were found</span>')
+   error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
 
 License
 ---

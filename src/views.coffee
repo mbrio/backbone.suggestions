@@ -9,11 +9,11 @@ class SuggestionView extends Backbone.View
   
   ### Templates that define the layout of the menu for each of it's states ###
   templates:
-    container: _.template('<div></div>')
+    container: _.template('<div class="<%= cssClass %>"></div>')
     default: _.template('<span class="message default">Begin typing for suggestions</span>')
     loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
-    loadedList: _.template('<ol></ol>')
-    loadedItem: _.template('<li><a href="#"><%= value %></a></li>')
+    loadedList: _.template('<ol class="<%= cssClass %>"></ol>')
+    loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>')
     empty: _.template('<span class="message empty">No suggestions were found</span>')
     error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
       
@@ -26,6 +26,9 @@ class SuggestionView extends Backbone.View
   options:
     zIndex: 500
     cssClass: 'suggestions-menu'
+    loadedListCssClass: 'suggestions-loaded-list'
+    listItemCssClass: 'suggestions-list-item'
+    listItemActionCssClass: 'suggestions-list-item-action'
     selectedCssClass: 'selected'
     enableForceClose: true
     templates: null
@@ -130,7 +133,7 @@ class SuggestionView extends Backbone.View
         return unless @_menuVisible
         event.preventDefault()
         
-        selected = @_menu.find "li.#{@options.selectedCssClass}"
+        selected = @_menu.find ".#{@options.listItemCssClass}.#{@options.selectedCssClass}"
 
         if selected?.size() > 0 and selected?.prev().length > 0
           selected.removeClass @options.selectedCssClass
@@ -140,7 +143,7 @@ class SuggestionView extends Backbone.View
         return unless @_menuVisible
         event.preventDefault()
         
-        selected = @_menu.find "li.#{@options.selectedCssClass}"
+        selected = @_menu.find ".#{@options.listItemCssClass}.#{@options.selectedCssClass}"
         
         if selected?.size() > 0 and selected?.next().length > 0
           selected.removeClass @options.selectedCssClass
@@ -150,7 +153,7 @@ class SuggestionView extends Backbone.View
         return unless @_menuVisible
         event.preventDefault()
         
-        selected = @_menu.find "li.#{@options.selectedCssClass} a"
+        selected = @_menu.find ".#{@options.listItemCssClass}.#{@options.selectedCssClass} a"
 
         if selected?.get(0)?
           selected.click()
@@ -187,7 +190,7 @@ class SuggestionView extends Backbone.View
     
   ### Generates the menu HTML ###
   _generateMenu: ->
-    @_menu = $(@templates.container()).addClass(@options.cssClass).css
+    @_menu = $(@templates.container({ cssClass: @options.cssClass })).css
       display: 'none'
 
     @el.parent().append(@_menu)
@@ -231,18 +234,22 @@ class SuggestionView extends Backbone.View
       when 'default' then @_menu.append @templates.default()
       when 'loading' then @_menu.append @templates.loading()
       when 'loaded'
-        list = $(@templates.loadedList());
+        list = $(@templates.loadedList({ cssClass: @options.loadedListCssClass }));
         if list.size() > 0
           container = list.first()
           for suggestion in parameters
+            suggestion.cssClass = @options.listItemCssClass
+            suggestion.actionCssClass = @options.listItemActionCssClass
+            
             li = $(@templates.loadedItem(suggestion))
-            li.find('a').data('suggestion', suggestion)
+            li.find(".#{@options.listItemActionCssClass}").data('suggestion', suggestion)
             container.append(li)
         
         @_menu.append list
-          
-        @_menu.find('> :first-child > li:first-child').addClass('selected')
-        @_menu.find('> :first-child > li > a').click (event) =>
+         
+        
+        list.find(".#{@options.listItemCssClass}:first-child").addClass('selected')
+        @_menu.find(".#{@options.listItemActionCssClass}").click (event) =>
           event.preventDefault();
           @select $(event.currentTarget).data('suggestion')
           
