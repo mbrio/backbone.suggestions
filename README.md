@@ -101,6 +101,8 @@ Options
         (default: 500)
     * `cssClass` = The CSS class that is applied to the containing element.
       (default: 'suggestions-menu')
+      moreActionCssClass
+      morePanelCssClass
     * `loadedListCssClass` = The CSS class that is applied to the list
       element.
       (default: 'suggestions-loaded-list')
@@ -125,17 +127,21 @@ Options
           selected.
         * `initiateSuggestion` = The callback that is executed at the
           beginning of a suggestion.
-        * `suggesting` = The callback that is executed when the application
-          begins the suggestion process. This callback only occurs if a
-          suggestion can proceed, the only state it cannot proceed in is when
-          the input field is blank.
-        * `suggested` = The callback that is executed when suggestions are
-          displayed.
+        * `suggesting(paging)` = The callback that is executed when the
+          application begins the suggestion process. This callback only occurs
+          if a suggestion can proceed, the only state it cannot proceed in is
+          when the input field is blank. The only parameter passed is whether
+          the method is paging.
+        * `suggested(paging)` = The callback that is executed when suggestions
+          are displayed. The only parameter passed is whether the method is
+          paging.
         * `loading` = The callback that is executed when a remote call is
           loading.
         * `error` = The callback that is executed when an AJAX error occurs.
         * `abort` = The callback that is executed when the AJAX error is an
           abort.
+        * `keyDown` = The callback that is executed when a key is pressed
+        * `keyUp` = The callback that is executed when a key is released
         * `enabled` = The callback that is executed when the view is enabled.
         * `disabled` = The callback that is executed when the view is
           disabled.
@@ -178,7 +184,7 @@ for each of the templates must result in a function.
         container: _.template('<div class="<%= cssClass %>"></div>')
         default: _.template('<span class="message default">Begin typing for suggestions</span>')
         loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
-        loadedList: _.template('<ol class="<%= cssClass %>"></ol>')
+        loadedList: _.template('<ol class="<%= cssClass %>"></ol><span class="<%= morePanelCssClass %>"><a href="javascript:void(0)" class="<%= moreActionCssClass %>">More</a></span>')
         loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>')
         empty: _.template('<span class="message empty">No suggestions were found</span>')
         error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
@@ -188,7 +194,11 @@ for each of the templates must result in a function.
 JSON Results
 ---
 JSON formatted responses must contain 1 object with a property called
-`suggestions` that represents an array of suggestion values.
+`suggestions` that represents an array of suggestion values. It may also
+contain a second object called `hasMore` that represents if there are more
+values that can be loaded in.
+
+**With No More Pages**
 
     {
       "suggestions": [
@@ -197,7 +207,18 @@ JSON formatted responses must contain 1 object with a property called
         { "value": "American Samoa" },
         { "value": "Arizona" },
         { "value": "Arkansas" }
-      ]
+      ],
+      "hasMore": false
+    }
+
+**With More Pages**    
+
+    {
+      "suggestions": [
+        { "value": "Alabama" },
+        { "value": "Alaska" },
+      ],
+      "hasMore": true
     }
     
 Your suggestions do not have to contain the same data as above (i.e. a
@@ -312,6 +333,50 @@ be converted to the new template structure.
    loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>')
    empty: _.template('<span class="message empty">No suggestions were found</span>')
    error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
+   
+Upgrading to Version 0.8.0
+---
+The service now supports loading in of more suggestions. The JSON data
+returned can now have a value called `hasMore` which enables the loading
+of more values. This value should be set to `true` if there are more results
+that can be loaded in, otherwise if all values have been requested it should
+return `false`.
+
+**Before**
+
+    {
+      "suggestions": [
+        { "name": "Alabama" },
+        { "name": "Alaska" },
+        { "name": "American Samoa" },
+        { "name": "Arizona" },
+        { "name": "Arkansas" }
+      ]
+    }
+    
+**After**
+
+    {
+      "suggestions": [
+        { "value": "Alabama" },
+        { "value": "Alaska" },
+        { "value": "American Samoa" },
+        { "value": "Arizona" },
+        { "value": "Arkansas" }
+      ],
+      "hasMore": false
+    }
+    
+There is an update to the templates as well, the `loadedList` template now
+contains the element that represents the more button.
+
+**Before**
+
+   loadedList: _.template('<ol class="<%= cssClass %>"></ol>')
+   
+**After**
+
+   loadedList: _.template('<ol class="<%= cssClass %>"></ol><span class="<%= morePanelCssClass %>"><a href="javascript:void(0)" class="<%= moreActionCssClass %>">More</a></span>')
 
 License
 ---

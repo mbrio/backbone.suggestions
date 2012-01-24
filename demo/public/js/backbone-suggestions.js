@@ -21,7 +21,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     UP: 38,
     DOWN: 40,
     ENTER: 13,
-    ESC: 27
+    ESC: 27,
+    TAB: 9
   };
 
   Cache = (function() {
@@ -39,7 +40,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     Cache.prototype.defaults = {
       timestamp: null,
       version: Suggestions.version,
-      suggestions: null
+      suggestions: null,
+      hasMore: false
     };
 
     return Cache;
@@ -76,8 +78,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     /* Initializes the object
     */
 
-    function SuggestionController(el, options) {
+    function SuggestionController(view, el, options) {
       var _ref, _ref2, _ref3;
+      this.view = view;
       this.el = el;
       this.options = _.defaults(_.clone(options), this.options);
       if (((_ref = this.options) != null ? _ref.callbacks : void 0) != null) {
@@ -103,6 +106,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionController.prototype._timeout = null;
 
+    SuggestionController.prototype._currentPage = 1;
+
     /* Default options
     */
 
@@ -110,7 +115,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       timeout: 500,
       expiresIn: 1000 * 60 * 60 * 12,
       cache: true,
-      lengthThreshold: 3
+      lengthThreshold: 3,
+      take: 10
     };
 
     /* Event callbacks
@@ -131,7 +137,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionController.prototype.ajax = {
-      url: '/suggestions?q=:query',
+      url: '/suggestions?p=:page&t=:take&q=:query',
       dataType: 'json'
     };
 
@@ -148,39 +154,42 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     };
 
     SuggestionController.prototype.enable = function() {
-      var _base;
+      var _ref;
       if (this._enabled) return;
       this.halt();
       this._enabled = true;
-      return typeof (_base = this.callbacks).enabled === "function" ? _base.enabled() : void 0;
+      return (_ref = this.callbacks.enabled) != null ? _ref.call(this.view) : void 0;
     };
 
     SuggestionController.prototype.disable = function() {
-      var _base;
+      var _ref;
       if (!this._enabled) return;
       this.halt();
       this._enabled = false;
-      return typeof (_base = this.callbacks).disabled === "function" ? _base.disabled() : void 0;
+      return (_ref = this.callbacks.disabled) != null ? _ref.call(this.view) : void 0;
     };
 
     /* Initializes a suggestion
     */
 
-    SuggestionController.prototype.suggest = function() {
-      var _base, _base2, _base3;
+    SuggestionController.prototype.suggest = function(paging) {
+      var _ref, _ref2, _ref3;
+      if (paging == null) paging = false;
       this.halt();
-      if (typeof (_base = this.callbacks).checkingLengthThreshold === "function") {
-        _base.checkingLengthThreshold(this.meets_length_threshold());
+      if ((_ref = this.callbacks.checkingLengthThreshold) != null) {
+        _ref.call(this.view, this.meets_length_threshold());
       }
       if (!this.can_suggest()) return;
-      if (typeof (_base2 = this.callbacks).initiateSuggestion === "function") {
-        _base2.initiateSuggestion();
+      if ((_ref2 = this.callbacks.initiateSuggestion) != null) {
+        _ref2.call(this.view);
       }
+      if (paging === false) this._currentPage = 1;
       if (this.el.val()) {
-        if (typeof (_base3 = this.callbacks).suggesting === "function") {
-          _base3.suggesting();
+        if (paging === true) this._currentPage++;
+        if ((_ref3 = this.callbacks.suggesting) != null) {
+          _ref3.call(this.view, paging);
         }
-        return this._timeout = setTimeout(this._suggestionMethod(this.el.val()), this.options.timeout);
+        return this._timeout = setTimeout(this._suggestionMethod(this.el.val(), paging), this.options.timeout);
       }
     };
 
@@ -196,18 +205,21 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     /* Determines whether to use locally cached or remotely called data
     */
 
-    SuggestionController.prototype._suggestionMethod = function(key) {
+    SuggestionController.prototype._suggestionMethod = function(key, paging) {
       var cached;
       var _this = this;
       key = this.ajax.url.replace(':query', key.toLowerCase());
+      key = key.replace(':page', this._currentPage);
+      key = key.replace(':take', this.options.take);
+      console.log(key);
       cached = this._findCache(key);
       if (cached != null) {
         return function() {
-          return _this._local(cached);
+          return _this._local(cached, paging);
         };
       } else {
         return function() {
-          return _this._ajax(key);
+          return _this._ajax(key, paging);
         };
       }
     };
@@ -215,37 +227,37 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     /* Complete suggestion with local data
     */
 
-    SuggestionController.prototype._local = function(cached) {
-      var _base;
-      return typeof (_base = this.callbacks).suggested === "function" ? _base.suggested(cached) : void 0;
+    SuggestionController.prototype._local = function(cached, paging) {
+      var _ref;
+      return (_ref = this.callbacks.suggested) != null ? _ref.call(this.view, cached, paging) : void 0;
     };
 
     /* Retrieve remote data and cache it prior to completing suggestion with
         local data
     */
 
-    SuggestionController.prototype._ajax = function(key) {
-      var ajaxOptions, _base, _ref;
+    SuggestionController.prototype._ajax = function(key, paging) {
+      var ajaxOptions, _ref, _ref2;
       var _this = this;
-      if (typeof (_base = this.callbacks).loading === "function") _base.loading();
+      if ((_ref = this.callbacks.loading) != null) _ref.call(this.view);
       ajaxOptions = {
         url: key,
         success: function(data) {
-          var _base2;
+          var _base, _ref2;
           _this._request = null;
-          _this._processAjax(key.toLowerCase(), data != null ? data.suggestions : void 0);
-          return typeof (_base2 = _this.ajax).success === "function" ? _base2.success(data) : void 0;
+          _this._processAjax(key.toLowerCase(), data != null ? data.suggestions : void 0, paging, (_ref2 = data != null ? data.hasMore : void 0) != null ? _ref2 : false);
+          return typeof (_base = _this.ajax).success === "function" ? _base.success(data) : void 0;
         },
         error: function(jqXHR, textStatus, errorThrown) {
-          var _base2, _base3;
-          if (typeof (_base2 = _this.callbacks).error === "function") {
-            _base2.error(jqXHR, textStatus, errorThrown);
+          var _base, _ref2;
+          if ((_ref2 = _this.callbacks.error) != null) {
+            _ref2.call(_this.view, jqXHR, textStatus, errorThrown);
           }
-          return typeof (_base3 = _this.ajax).error === "function" ? _base3.error(jqXHR, textStatus, errorThrown) : void 0;
+          return typeof (_base = _this.ajax).error === "function" ? _base.error(jqXHR, textStatus, errorThrown) : void 0;
         }
       };
       ajaxOptions = _.defaults(ajaxOptions, this.ajax);
-      if (((_ref = this.options) != null ? _ref.callbacks : void 0) != null) {
+      if (((_ref2 = this.options) != null ? _ref2.callbacks : void 0) != null) {
         this.callbacks = _.defaults(this.options.callbacks, this.callbacks);
       }
       return this._request = $.ajax(ajaxOptions);
@@ -255,19 +267,20 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         data
     */
 
-    SuggestionController.prototype._processAjax = function(key, suggestions) {
+    SuggestionController.prototype._processAjax = function(key, suggestions, paging, hasMore) {
       var cached;
       cached = new Cache({
         timestamp: new Date,
         key: key,
         version: Suggestions.version,
-        suggestions: suggestions
+        suggestions: suggestions,
+        hasMore: hasMore
       });
       if (this.options.cache) {
         this._cache.add(cached);
         this._save();
       }
-      return this._local(cached);
+      return this._local(cached, paging);
     };
 
     /* Methods for managing the cache
@@ -352,8 +365,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     __extends(SuggestionView, Backbone.View);
 
     function SuggestionView() {
+      this._documentClick = __bind(this._documentClick, this);
       this._onfocus = __bind(this._onfocus, this);
-      this._onblur = __bind(this._onblur, this);
       this._onkeyup = __bind(this._onkeyup, this);
       this._onkeydown = __bind(this._onkeydown, this);
       SuggestionView.__super__.constructor.apply(this, arguments);
@@ -379,8 +392,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       container: _.template('<div class="<%= cssClass %>"></div>'),
       "default": _.template('<span class="message default">Begin typing for suggestions</span>'),
       loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>'),
-      loadedList: _.template('<ol class="<%= cssClass %>"></ol>'),
-      loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>'),
+      loadedList: _.template('<ol class="<%= cssClass %>"></ol><span class="<%= morePanelCssClass %>"><a href="javascript:void(0)" class="<%= moreActionCssClass %>">More</a></span>'),
+      loadedItem: _.template('<li class="<%= cssClass %>"><a href="javascript:void(0)" class="<%= actionCssClass %>"><%= value %></a></li>'),
       empty: _.template('<span class="message empty">No suggestions were found</span>'),
       error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
     };
@@ -390,7 +403,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype.callbacks = {
       selected: null,
-      abort: null
+      abort: null,
+      keyDown: null,
+      keyUp: null
     };
 
     /* Default options
@@ -399,6 +414,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionView.prototype.options = {
       zIndex: 500,
       cssClass: 'suggestions-menu',
+      morePanelCssClass: 'suggestions-more-panel',
+      moreActionCssClass: 'suggestions-more-action',
       loadedListCssClass: 'suggestions-loaded-list',
       listItemCssClass: 'suggestions-list-item',
       listItemActionCssClass: 'suggestions-list-item-action',
@@ -417,12 +434,16 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       return this._keyup(event);
     };
 
-    SuggestionView.prototype._onblur = function(event) {
-      return this._blur(event);
-    };
-
     SuggestionView.prototype._onfocus = function(event) {
       return this._focus(event);
+    };
+
+    SuggestionView.prototype._onclick = function(event) {
+      return event.stopImmediatePropagation();
+    };
+
+    SuggestionView.prototype._documentClick = function(event) {
+      return this.hide();
     };
 
     /* Initializes the object
@@ -448,8 +469,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         suggesting: function() {
           return _this._suggesting();
         },
-        suggested: function(cached) {
-          return _this._suggested(cached);
+        suggested: function(cached, paging) {
+          return _this._suggested(cached, paging);
         },
         error: function(jqXHR, textStatus, errorThrown) {
           return _this._error(jqXHR, textStatus, errorThrown);
@@ -464,7 +485,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           return _this._disabled();
         }
       };
-      this._controller = new SuggestionController(this.el, this.options);
+      this._controller = new SuggestionController(this, this.el, this.options);
       return this._generateMenu();
     };
 
@@ -473,26 +494,28 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     };
 
     SuggestionView.prototype._enabled = function() {
-      var _ref;
+      var _ref, _ref2;
       this.el.bind(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
+      this.el.bind('click', this._onclick);
       this.el.bind({
         keyup: this._onkeyup,
         blur: this._onblur,
         focus: this._onfocus
       });
-      return (_ref = this.callbacks) != null ? typeof _ref.enabled === "function" ? _ref.enabled() : void 0 : void 0;
+      return (_ref = this.callbacks) != null ? (_ref2 = _ref.enabled) != null ? _ref2.call(this) : void 0 : void 0;
     };
 
     SuggestionView.prototype._disabled = function() {
-      var _ref;
+      var _ref, _ref2;
       this.el.blur();
       this.el.unbind(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
+      this.el.unbind('click', this._onclick);
       this.el.unbind({
         keyup: this._onkeyup,
         blur: this._onblur,
         focus: this._onfocus
       });
-      return (_ref = this.callbacks) != null ? typeof _ref.disabled === "function" ? _ref.disabled() : void 0 : void 0;
+      return (_ref = this.callbacks) != null ? (_ref2 = _ref.disabled) != null ? _ref2.call(this) : void 0 : void 0;
     };
 
     SuggestionView.prototype.enable = function() {
@@ -508,9 +531,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype._checkingLengthThreshold = function(does_meet) {
-      var _base;
-      if (typeof (_base = this.callbacks).checkingLengthThreshold === "function") {
-        _base.checkingLengthThreshold(does_meet);
+      var _ref;
+      if ((_ref = this.callbacks.checkingLengthThreshold) != null) {
+        _ref.call(this, does_meet);
       }
       if (!does_meet) return this.render('default');
     };
@@ -519,11 +542,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype._initiateSuggestion = function() {
-      var _base, _ref;
-      if (typeof (_base = this.callbacks).initiateSuggestion === "function") {
-        _base.initiateSuggestion();
-      }
-      if (!(((_ref = this.el.val()) != null ? _ref.length : void 0) > 0)) {
+      var _ref, _ref2;
+      if ((_ref = this.callbacks.initiateSuggestion) != null) _ref.call(this);
+      if (!(((_ref2 = this.el.val()) != null ? _ref2.length : void 0) > 0)) {
         return this.render('default');
       }
     };
@@ -532,27 +553,28 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype._suggesting = function() {
-      var _base;
-      return typeof (_base = this.callbacks).suggesting === "function" ? _base.suggesting() : void 0;
+      var _ref;
+      return (_ref = this.callbacks.suggesting) != null ? _ref.call(this) : void 0;
     };
 
     SuggestionView.prototype._loading = function() {
-      var _base;
-      if (typeof (_base = this.callbacks).loading === "function") _base.loading();
+      var _ref;
+      if ((_ref = this.callbacks.loading) != null) _ref.call(this);
       return this.render('loading');
     };
 
     /* Callback for when a suggestions is completed
     */
 
-    SuggestionView.prototype._suggested = function(cached) {
-      var suggestions, _base;
-      if (typeof (_base = this.callbacks).suggested === "function") {
-        _base.suggested(cached);
-      }
+    SuggestionView.prototype._suggested = function(cached, paging) {
+      var suggestions, _ref;
+      if ((_ref = this.callbacks.suggested) != null) _ref.call(this, cached);
       suggestions = cached.get('suggestions');
       if (suggestions.length > 0) {
-        return this.render('loaded', suggestions);
+        return this.render('loaded', {
+          cached: cached,
+          paging: paging
+        });
       } else {
         return this.render('empty');
       }
@@ -562,15 +584,15 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype._error = function(jqXHR, textStatus, errorThrown) {
-      var _base, _base2;
+      var _ref, _ref2;
       if (textStatus !== 'abort') {
-        if (typeof (_base = this.callbacks).error === "function") {
-          _base.error(jqXHR, textStatus, errorThrown);
+        if ((_ref = this.callbacks.error) != null) {
+          _ref.call(this, jqXHR, textStatus, errorThrown);
         }
         return this.render('error');
       } else {
-        if (typeof (_base2 = this.callbacks).abort === "function") {
-          _base2.abort(jqXHR, textStatus, errorThrown);
+        if ((_ref2 = this.callbacks.abort) != null) {
+          _ref2.call(this, jqXHR, textStatus, errorThrown);
         }
         return this.render('default');
       }
@@ -580,13 +602,19 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype._keydown = function(event) {
-      var selected;
+      var selected, _ref;
       if (this._forceClosed) return;
+      if (((_ref = this.callbacks.keyDown) != null ? _ref.call(this, event) : void 0) === true) {
+        return;
+      }
       switch (event.keyCode) {
+        case KEYS.TAB:
+          if (!this._menuVisible) return;
+          return this.hide();
         case KEYS.UP:
           if (!this._menuVisible) return;
           event.preventDefault();
-          selected = this._menu.find("." + this.options.listItemCssClass + "." + this.options.selectedCssClass);
+          selected = this.filterFind(this._menu, "." + this.options.listItemCssClass + "." + this.options.selectedCssClass);
           if ((selected != null ? selected.size() : void 0) > 0 && (selected != null ? selected.prev().length : void 0) > 0) {
             selected.removeClass(this.options.selectedCssClass);
             return selected.prev().addClass(this.options.selectedCssClass);
@@ -595,7 +623,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         case KEYS.DOWN:
           if (!this._menuVisible) return;
           event.preventDefault();
-          selected = this._menu.find("." + this.options.listItemCssClass + "." + this.options.selectedCssClass);
+          selected = this.filterFind(this._menu, "." + this.options.listItemCssClass + "." + this.options.selectedCssClass);
           if ((selected != null ? selected.size() : void 0) > 0 && (selected != null ? selected.next().length : void 0) > 0) {
             selected.removeClass(this.options.selectedCssClass);
             return selected.next().addClass(this.options.selectedCssClass);
@@ -604,7 +632,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         case KEYS.ENTER:
           if (!this._menuVisible) return;
           event.preventDefault();
-          selected = this._menu.find("." + this.options.listItemCssClass + "." + this.options.selectedCssClass + " a");
+          selected = this.filterFind(this._menu, "." + this.options.listItemCssClass + "." + this.options.selectedCssClass + " a");
           if ((selected != null ? selected.get(0) : void 0) != null) {
             selected.click();
             return this.hide();
@@ -624,13 +652,19 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype._keyup = function(event) {
+      var _ref;
       if (this._forceClosed) return;
+      if (((_ref = this.callbacks.keyUp) != null ? _ref.call(this, event) : void 0) === true) {
+        return;
+      }
       switch (event.keyCode) {
         case KEYS.UP:
         case KEYS.DOWN:
         case KEYS.ENTER:
         case KEYS.ESC:
           if (this._menuVisible) return event.preventDefault();
+          break;
+        case KEYS.TAB:
           break;
         default:
           if (this._menuVisible && this._previousValue !== this.el.val()) {
@@ -640,18 +674,12 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       }
     };
 
-    /* Hides the menu when the element's blur event is fired
-    */
-
-    SuggestionView.prototype._blur = function(event) {
-      return this.hide();
-    };
-
     /* Shows the menu when the element's focus event is fired
     */
 
     SuggestionView.prototype._focus = function(event) {
       this._forceClosed = false;
+      if (this._menuVisible) return;
       this.show();
       return this._controller.suggest();
     };
@@ -673,6 +701,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype.show = function() {
       if (this._menuVisible) return;
+      $(document).bind('click', this._documentClick);
       this._menuVisible = true;
       this._controller.halt();
       this.render('default');
@@ -686,6 +715,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype.hide = function() {
       if (!this._menuVisible) return;
+      $(document).unbind('click', this._documentClick);
       this._previousValue = null;
       this._menuVisible = false;
       this._controller.halt();
@@ -705,16 +735,23 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype.select = function(val) {
-      var _base;
+      var _ref;
       this.el.val(val[this.options.valueField]);
-      return typeof (_base = this.callbacks).selected === "function" ? _base.selected(val) : void 0;
+      return (_ref = this.callbacks.selected) != null ? _ref.call(this, val) : void 0;
+    };
+
+    SuggestionView.prototype.filterFind = function(jq, selector) {
+      var obj;
+      obj = jq.filter(selector);
+      if (!(obj.size() > 0)) obj = jq.find(selector);
+      return obj;
     };
 
     /* Renders the template of the menu
     */
 
     SuggestionView.prototype.render = function(state, parameters) {
-      var container, li, list, suggestion, _i, _len;
+      var container, li, list, moreAction, panel, suggestion, suggestions, _i, _len;
       var _this = this;
       this._menu.empty();
       switch (state) {
@@ -724,22 +761,35 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           return this._menu.append(this.templates.loading());
         case 'loaded':
           list = $(this.templates.loadedList({
-            cssClass: this.options.loadedListCssClass
+            cssClass: this.options.loadedListCssClass,
+            morePanelCssClass: this.options.morePanelCssClass,
+            moreActionCssClass: this.options.moreActionCssClass
           }));
-          if (list.size() > 0) {
-            container = list.first();
-            for (_i = 0, _len = parameters.length; _i < _len; _i++) {
-              suggestion = parameters[_i];
-              suggestion.cssClass = this.options.listItemCssClass;
-              suggestion.actionCssClass = this.options.listItemActionCssClass;
-              li = $(this.templates.loadedItem(suggestion));
-              li.find("." + this.options.listItemActionCssClass).data('suggestion', suggestion);
-              container.append(li);
-            }
+          container = this.filterFind(list, "." + this.options.loadedListCssClass);
+          suggestions = parameters.cached.get('suggestions');
+          for (_i = 0, _len = suggestions.length; _i < _len; _i++) {
+            suggestion = suggestions[_i];
+            suggestion.cssClass = this.options.listItemCssClass;
+            suggestion.actionCssClass = this.options.listItemActionCssClass;
+            li = $(this.templates.loadedItem(suggestion));
+            this.filterFind(li, "." + this.options.listItemActionCssClass).data('suggestion', suggestion);
+            container.append(li);
           }
           this._menu.append(list);
-          list.find("." + this.options.listItemCssClass + ":first-child").addClass('selected');
-          return this._menu.find("." + this.options.listItemActionCssClass).click(function(event) {
+          if (parameters.cached.get('hasMore') === true) {
+            moreAction = this.filterFind(list, "." + this.options.moreActionCssClass);
+            moreAction.click(function(event) {
+              event.stopImmediatePropagation();
+              event.preventDefault();
+              _this.el.focus();
+              return _this._controller.suggest(true);
+            });
+          } else {
+            panel = this.filterFind(this._menu, "." + this.options.morePanelCssClass);
+            panel.remove();
+          }
+          this.filterFind(list, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
+          return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).click(function(event) {
             event.preventDefault();
             return _this.select($(event.currentTarget).data('suggestion'));
           });

@@ -1,7 +1,7 @@
 ### The controller that manages the retrieval of suggestions ###
 class SuggestionController  
   ### Initializes the object ###
-  constructor: (@el, options) ->
+  constructor: (@view, @el, options) ->
     @options = _.defaults _.clone(options), @options
     @callbacks = _.defaults _.clone(@options.callbacks), @callbacks if @options?.callbacks?
     @ajax = _.defaults _.clone(@options.ajax), @ajax if @options?.ajax?
@@ -13,6 +13,7 @@ class SuggestionController
   _cacheKey: 'suggestions-cache'
   _request: null
   _timeout: null
+  _currentPage: 1
   
   ### Default options ###
   options:
@@ -20,6 +21,7 @@ class SuggestionController
     expiresIn: 1000 * 60 * 60 * 12
     cache: true
     lengthThreshold: 3
+    take: 10
     
   ### Event callbacks ###
   callbacks:
@@ -34,7 +36,7 @@ class SuggestionController
   
   ### AJAX options ###
   ajax:
-    url: '/suggestions?q=:query'
+    url: '/suggestions?p=:page&t=:take&q=:query'
     dataType: 'json'
     
   is_enabled: ->
@@ -50,25 +52,27 @@ class SuggestionController
     return if @_enabled
     @halt()
     @_enabled = true
-    @callbacks.enabled?()
+    @callbacks.enabled?.call(@view)
   
   disable: ->
     return unless @_enabled
     @halt()
     @_enabled = false
-    @callbacks.disabled?()
+    @callbacks.disabled?.call(@view)
     
   ### Initializes a suggestion ###
-  suggest: ->
+  suggest: (paging = false) ->
     @halt();
-    @callbacks.checkingLengthThreshold?(@meets_length_threshold())
+    @callbacks.checkingLengthThreshold?.call(@view, @meets_length_threshold())
     return unless @can_suggest()
     
-    @callbacks.initiateSuggestion?()
+    @callbacks.initiateSuggestion?.call(@view)
 
+    @_currentPage = 1 if paging == false
     if @el.val()
-      @callbacks.suggesting?()
-      @_timeout = setTimeout @_suggestionMethod(@el.val()), (@options.timeout)
+      @_currentPage++ if paging == true
+      @callbacks.suggesting?.call(@view, paging)
+      @_timeout = setTimeout @_suggestionMethod(@el.val(), paging), (@options.timeout)
     
   ### Halts any AJAX requests and timeouts ###
   halt: ->
@@ -76,31 +80,35 @@ class SuggestionController
     clearTimeout @_timeout if @_timeout?
 
   ### Determines whether to use locally cached or remotely called data ###
-  _suggestionMethod: (key) ->
+  _suggestionMethod: (key, paging) ->
     key = (@ajax.url).replace ':query', key.toLowerCase()
+    key = key.replace ':page', @_currentPage
+    key = key.replace ':take', @options.take
+    
+    console.log(key)
     
     cached = @_findCache(key)
   
-    if cached? then () => @_local(cached) else () => @_ajax(key)
+    if cached? then () => @_local(cached, paging) else () => @_ajax(key, paging)
     
   ### Complete suggestion with local data ###
-  _local: (cached) ->    
-    @callbacks.suggested?(cached)
+  _local: (cached, paging) ->    
+    @callbacks.suggested?.call(@view, cached, paging)
     
   ### Retrieve remote data and cache it prior to completing suggestion with
       local data ###
-  _ajax: (key) ->
-    @callbacks.loading?()
+  _ajax: (key, paging) ->
+    @callbacks.loading?.call(@view)
 
     ajaxOptions =
       url: key
       success: (data) =>
         @_request = null
       
-        @_processAjax key.toLowerCase(), data?.suggestions
+        @_processAjax key.toLowerCase(), data?.suggestions, paging, data?.hasMore ? false
         @ajax.success? data
       error: (jqXHR, textStatus, errorThrown) =>
-        @callbacks.error? jqXHR, textStatus, errorThrown
+        @callbacks.error?.call(@view, jqXHR, textStatus, errorThrown)
         @ajax.error? jqXHR, textStatus, errorThrown
         
     ajaxOptions = _.defaults ajaxOptions, @ajax
@@ -109,18 +117,19 @@ class SuggestionController
         
   ### Process the retrieved data prior to completing the suggestion with local
       data ###
-  _processAjax: (key, suggestions) ->
+  _processAjax: (key, suggestions, paging, hasMore) ->
     cached = new Cache
       timestamp: new Date
       key: key
       version: Suggestions.version
       suggestions: suggestions
+      hasMore: hasMore
         
     if @options.cache
       @_cache.add cached
       @_save()
     
-    @_local(cached)
+    @_local(cached, paging)
     
   ### Methods for managing the cache ###
   

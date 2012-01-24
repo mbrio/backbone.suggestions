@@ -5,6 +5,7 @@ class Cache extends Backbone.Model
     timestamp: null
     version: Suggestions.version
     suggestions: null
+    hasMore: false
   
 class CacheCollection extends Backbone.Collection
   storageEngine: 'localStorage'

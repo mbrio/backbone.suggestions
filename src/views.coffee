@@ -12,8 +12,8 @@ class SuggestionView extends Backbone.View
     container: _.template('<div class="<%= cssClass %>"></div>')
     default: _.template('<span class="message default">Begin typing for suggestions</span>')
     loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
-    loadedList: _.template('<ol class="<%= cssClass %>"></ol>')
-    loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>')
+    loadedList: _.template('<ol class="<%= cssClass %>"></ol><span class="<%= morePanelCssClass %>"><a href="javascript:void(0)" class="<%= moreActionCssClass %>">More</a></span>')
+    loadedItem: _.template('<li class="<%= cssClass %>"><a href="javascript:void(0)" class="<%= actionCssClass %>"><%= value %></a></li>')
     empty: _.template('<span class="message empty">No suggestions were found</span>')
     error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
       
@@ -21,11 +21,15 @@ class SuggestionView extends Backbone.View
   callbacks:
     selected: null
     abort: null
+    keyDown: null
+    keyUp: null
   
   ### Default options ###
   options:
     zIndex: 500
     cssClass: 'suggestions-menu'
+    morePanelCssClass: 'suggestions-more-panel'
+    moreActionCssClass: 'suggestions-more-action'
     loadedListCssClass: 'suggestions-loaded-list'
     listItemCssClass: 'suggestions-list-item'
     listItemActionCssClass: 'suggestions-list-item-action'
@@ -34,12 +38,12 @@ class SuggestionView extends Backbone.View
     templates: null
     callbacks: null
     valueField: 'value'
-    
   
   _onkeydown: (event) => @_keydown event
   _onkeyup: (event) => @_keyup event
-  _onblur: (event) => @_blur event
   _onfocus: (event) => @_focus event
+  _onclick: (event) -> event.stopImmediatePropagation()
+  _documentClick: (event) => @hide()
     
   ### Initializes the object ###
   initialize: ->
@@ -51,13 +55,13 @@ class SuggestionView extends Backbone.View
       initiateSuggestion: => @_initiateSuggestion()
       checkingLengthThreshold: (does_meet) => @_checkingLengthThreshold(does_meet)
       suggesting: => @_suggesting()
-      suggested: (cached) => @_suggested(cached)
+      suggested: (cached, paging) => @_suggested(cached, paging)
       error: (jqXHR, textStatus, errorThrown) => @_error(jqXHR, textStatus, errorThrown)
       loading: => @_loading()
       enabled: => @_enabled()
       disabled: => @_disabled()
 
-    @_controller = new SuggestionController @el, @options
+    @_controller = new SuggestionController this, @el, @options
     
     @_generateMenu()
       
@@ -66,23 +70,25 @@ class SuggestionView extends Backbone.View
     
   _enabled: ->
     @el.bind (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
+    @el.bind 'click', @_onclick
     @el.bind
       keyup: @_onkeyup
       blur: @_onblur
       focus: @_onfocus
       
-    @callbacks?.enabled?()
+    @callbacks?.enabled?.call(this)
     
   _disabled: ->
     @el.blur()
     
     @el.unbind (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
+    @el.unbind 'click', @_onclick
     @el.unbind
       keyup: @_onkeyup
       blur: @_onblur
       focus: @_onfocus
       
-    @callbacks?.disabled?()
+    @callbacks?.disabled?.call(this)
     
   enable: ->
     @_controller.enable()
@@ -93,47 +99,53 @@ class SuggestionView extends Backbone.View
   ### Callback for when the controller is checking the length threshold prior
       to making a suggestion ###
   _checkingLengthThreshold: (does_meet) ->
-    @callbacks.checkingLengthThreshold?(does_meet)
+    @callbacks.checkingLengthThreshold?.call(this, does_meet)
     @render 'default' unless does_meet
     
   ### Callback for when a suggestion is initialized ###
   _initiateSuggestion: ->
-    @callbacks.initiateSuggestion?()
+    @callbacks.initiateSuggestion?.call(this)
     @render 'default' unless @el.val()?.length > 0
 
   ### Callback for when a suggestion is processing ###
   _suggesting: ->
-    @callbacks.suggesting?()
+    @callbacks.suggesting?.call(this)
 
   _loading: ->
-    @callbacks.loading?()
+    @callbacks.loading?.call(this)
     @render 'loading'
         
   ### Callback for when a suggestions is completed ###
-  _suggested: (cached) ->
-    @callbacks.suggested?(cached)
+  _suggested: (cached, paging) ->
+    @callbacks.suggested?.call(this, cached)
     suggestions = cached.get('suggestions')
-    if suggestions.length > 0 then @render 'loaded', suggestions else @render 'empty'
+    if suggestions.length > 0 then @render 'loaded', { cached: cached, paging: paging } else @render 'empty'
     
   ### Callback for when there is an AJAX error durion a suggestion ###
   _error: (jqXHR, textStatus, errorThrown) ->
     if (textStatus != 'abort')
-      @callbacks.error?(jqXHR, textStatus, errorThrown)
+      @callbacks.error?.call(this, jqXHR, textStatus, errorThrown)
       @render 'error'
     else
-      @callbacks.abort?(jqXHR, textStatus, errorThrown)
+      @callbacks.abort?.call(this, jqXHR, textStatus, errorThrown)
       @render 'default'
     
   ### Manages user input ###
   _keydown: (event) ->
     return if @_forceClosed
     
+    return if @callbacks.keyDown?.call(this, event) == true
+    
     switch event.keyCode
+      when KEYS.TAB
+        return unless @_menuVisible
+        @hide()
+              
       when KEYS.UP
         return unless @_menuVisible
         event.preventDefault()
         
-        selected = @_menu.find ".#{@options.listItemCssClass}.#{@options.selectedCssClass}"
+        selected = @filterFind @_menu, ".#{@options.listItemCssClass}.#{@options.selectedCssClass}"
 
         if selected?.size() > 0 and selected?.prev().length > 0
           selected.removeClass @options.selectedCssClass
@@ -143,7 +155,7 @@ class SuggestionView extends Backbone.View
         return unless @_menuVisible
         event.preventDefault()
         
-        selected = @_menu.find ".#{@options.listItemCssClass}.#{@options.selectedCssClass}"
+        selected = @filterFind @_menu, ".#{@options.listItemCssClass}.#{@options.selectedCssClass}"
         
         if selected?.size() > 0 and selected?.next().length > 0
           selected.removeClass @options.selectedCssClass
@@ -153,7 +165,7 @@ class SuggestionView extends Backbone.View
         return unless @_menuVisible
         event.preventDefault()
         
-        selected = @_menu.find ".#{@options.listItemCssClass}.#{@options.selectedCssClass} a"
+        selected = @filterFind @_menu, ".#{@options.listItemCssClass}.#{@options.selectedCssClass} a"
 
         if selected?.get(0)?
           selected.click()
@@ -168,23 +180,24 @@ class SuggestionView extends Backbone.View
     
   ### Manages user input and potentially initiates a suggestion call ###
   _keyup: (event) ->
-    return if @_forceClosed    
+    return if @_forceClosed
+    
+    return if @callbacks.keyUp?.call(this, event) == true
+        
     switch event.keyCode
       when KEYS.UP, KEYS.DOWN, KEYS.ENTER, KEYS.ESC
-        if @_menuVisible then do event.preventDefault
+        if @_menuVisible then event.preventDefault()
+      when KEYS.TAB
       else
         if @_menuVisible and @_previousValue isnt @el.val()
           @_controller.suggest()
           @_previousValue = @el.val()
-  
-  ### Hides the menu when the element's blur event is fired ###
-  _blur: (event) ->
-    @hide()
 
   ### Shows the menu when the element's focus event is fired ###
   _focus: (event) ->
     @_forceClosed = false
     
+    return if @_menuVisible
     @show()
     @_controller.suggest()
     
@@ -194,10 +207,12 @@ class SuggestionView extends Backbone.View
       display: 'none'
 
     @el.parent().append(@_menu)
-      
+    
   ### Displays the menu ###
   show: ->
     return if @_menuVisible
+    
+    $(document).bind 'click', @_documentClick
     
     @_menuVisible = true
     @_controller.halt()
@@ -211,6 +226,8 @@ class SuggestionView extends Backbone.View
   hide: ->
     return unless @_menuVisible
     
+    $(document).unbind 'click', @_documentClick
+        
     @_previousValue = null
     @_menuVisible = false
     @_controller.halt()
@@ -224,7 +241,13 @@ class SuggestionView extends Backbone.View
   ### Selects a value ###
   select: (val) ->
     @el.val val[@options.valueField]
-    @callbacks.selected? val
+    @callbacks.selected?.call(this, val)
+    
+  filterFind: (jq, selector) ->
+    obj = jq.filter(selector)
+    obj = jq.find(selector) unless obj.size() > 0
+    
+    obj
   
   ### Renders the template of the menu ###
   render: (state, parameters) ->
@@ -234,23 +257,42 @@ class SuggestionView extends Backbone.View
       when 'default' then @_menu.append @templates.default()
       when 'loading' then @_menu.append @templates.loading()
       when 'loaded'
-        list = $(@templates.loadedList({ cssClass: @options.loadedListCssClass }));
-        if list.size() > 0
-          container = list.first()
-          for suggestion in parameters
-            suggestion.cssClass = @options.listItemCssClass
-            suggestion.actionCssClass = @options.listItemActionCssClass
-            
-            li = $(@templates.loadedItem(suggestion))
-            li.find(".#{@options.listItemActionCssClass}").data('suggestion', suggestion)
-            container.append(li)
+        list = $(@templates.loadedList(
+          cssClass: @options.loadedListCssClass
+          morePanelCssClass: @options.morePanelCssClass
+          moreActionCssClass: @options.moreActionCssClass));
+
+        container = @filterFind(list, ".#{@options.loadedListCssClass}")
+      
+        suggestions = parameters.cached.get('suggestions')
+        for suggestion in suggestions
+          suggestion.cssClass = @options.listItemCssClass
+          suggestion.actionCssClass = @options.listItemActionCssClass
         
+          li = $(@templates.loadedItem(suggestion))
+          @filterFind(li, ".#{@options.listItemActionCssClass}").data('suggestion', suggestion)            
+          container.append(li)
+      
         @_menu.append list
-         
+      
+        if (parameters.cached.get('hasMore') == true)
+          moreAction = @filterFind(list, ".#{@options.moreActionCssClass}")
+          moreAction.click (event) =>
+            event.stopImmediatePropagation()
+            event.preventDefault()
+            
+            @el.focus()
+            @_controller.suggest(true)
+          
+        else
+          panel = @filterFind(@_menu, ".#{@options.morePanelCssClass}")
+          panel.remove()
+       
+      
+        @filterFind(list, ".#{@options.listItemCssClass}:first-child").addClass('selected')
+        @filterFind(@_menu, ".#{@options.listItemActionCssClass}").click (event) =>
+          event.preventDefault()
         
-        list.find(".#{@options.listItemCssClass}:first-child").addClass('selected')
-        @_menu.find(".#{@options.listItemActionCssClass}").click (event) =>
-          event.preventDefault();
           @select $(event.currentTarget).data('suggestion')
           
       when 'empty' then @_menu.append @templates.empty()
