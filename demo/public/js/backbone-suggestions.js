@@ -1,5 +1,5 @@
 /*
-backbone.suggestions.js 0.8.1
+backbone.suggestions.js 0.8.2
 Copyright (c) 2011-2012 Michael Diolosa, <michael.diolosa@gmail.com>
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.8.1';
+  Suggestions.version = '0.8.2';
 
   KEYS = {
     UP: 38,
@@ -121,7 +121,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       expiresIn: 1000 * 60 * 60 * 12,
       cache: true,
       lengthThreshold: 3,
-      take: 10
+      take: 10,
+      enable: true
     };
 
     /* Event callbacks
@@ -192,7 +193,10 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       if ((_ref2 = this.callbacks.initiateSuggestion) != null) {
         _ref2.call(this.view);
       }
-      if (pagingVector === null) this._currentPage = 1;
+      if (pagingVector === null) {
+        this._currentPage = 1;
+        pagingVector = 0;
+      }
       if (this.el.val()) {
         this._currentPage = this._currentPage + pagingVector;
         if (this._currentPage < 1) this._currentPage = 1;
@@ -221,7 +225,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       key = this.ajax.url.replace(':query', key.toLowerCase());
       key = key.replace(':page', this._currentPage);
       key = key.replace(':take', this.options.take);
-      console.log(key);
       cached = this._findCache(key);
       if (cached != null) {
         return function() {
@@ -371,11 +374,13 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
   */
 
   SuggestionView = (function() {
+    var _blurTimeout, _donotBlur;
 
     __extends(SuggestionView, Backbone.View);
 
     function SuggestionView() {
       this._documentClick = __bind(this._documentClick, this);
+      this._onblur = __bind(this._onblur, this);
       this._onfocus = __bind(this._onfocus, this);
       this._onkeyup = __bind(this._onkeyup, this);
       this._onkeydown = __bind(this._onkeydown, this);
@@ -394,6 +399,10 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionView.prototype._menu = null;
 
     SuggestionView.prototype._previousValue = null;
+
+    _blurTimeout = null;
+
+    _donotBlur = false;
 
     /* Templates that define the layout of the menu for each of it's states
     */
@@ -450,8 +459,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       return this._focus(event);
     };
 
-    SuggestionView.prototype._onclick = function(event) {
-      return event.stopImmediatePropagation();
+    SuggestionView.prototype._onblur = function(event) {
+      return this._blur(event);
     };
 
     SuggestionView.prototype._documentClick = function(event) {
@@ -508,7 +517,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionView.prototype._enabled = function() {
       var _ref, _ref2;
       this.el.bind(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
-      this.el.bind('click', this._onclick);
       this.el.bind({
         keyup: this._onkeyup,
         blur: this._onblur,
@@ -521,7 +529,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       var _ref, _ref2;
       this.el.blur();
       this.el.unbind(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
-      this.el.unbind('click', this._onclick);
       this.el.unbind({
         keyup: this._onkeyup,
         blur: this._onblur,
@@ -620,9 +627,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         return;
       }
       switch (event.keyCode) {
-        case KEYS.TAB:
-          if (!this._menuVisible) return;
-          return this.hide();
         case KEYS.UP:
           if (!this._menuVisible) return;
           event.preventDefault();
@@ -676,8 +680,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         case KEYS.ESC:
           if (this._menuVisible) return event.preventDefault();
           break;
-        case KEYS.TAB:
-          break;
         default:
           if (this._menuVisible && this._previousValue !== this.el.val()) {
             this._controller.suggest();
@@ -694,6 +696,20 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       if (this._menuVisible) return;
       this.show();
       return this._controller.suggest();
+    };
+
+    /* Hides the menu when the element's blur event is fired
+    */
+
+    SuggestionView.prototype._blur = function(event) {
+      var callback;
+      var _this = this;
+      if (!this._donotBlur) {
+        callback = function() {
+          return _this.hide();
+        };
+        return this._blurTimeout = setTimeout(callback, 200);
+      }
     };
 
     /* Generates the menu HTML
@@ -713,7 +729,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype.show = function() {
       if (this._menuVisible) return;
-      $(document).bind('click', this._documentClick);
+      clearTimeout(this._blurTimeout);
       this._menuVisible = true;
       this._controller.halt();
       this.render('default');
@@ -727,7 +743,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype.hide = function() {
       if (!this._menuVisible) return;
-      $(document).unbind('click', this._documentClick);
       this._previousValue = null;
       this._menuVisible = false;
       this._controller.halt();
@@ -794,9 +809,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           actionsRemoved = 0;
           if (this._controller.get_current_page() > 1) {
             prevAction.click(function(event) {
-              event.stopImmediatePropagation();
+              _this._donotBlur = true;
+              clearTimeout(_this._blurTimeout);
               event.preventDefault();
               _this.el.focus();
+              _this._donotBlur = false;
               return _this._controller.suggest(PAGING_VECTOR.PREV);
             });
           } else {
@@ -805,9 +822,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           }
           if (parameters.cached.get('hasMore') === true) {
             nextAction.click(function(event) {
-              event.stopImmediatePropagation();
+              _this._donotBlur = true;
+              clearTimeout(_this._blurTimeout);
               event.preventDefault();
               _this.el.focus();
+              _this._donotBlur = false;
               return _this._controller.suggest(PAGING_VECTOR.NEXT);
             });
           } else {

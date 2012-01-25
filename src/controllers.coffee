@@ -22,6 +22,7 @@ class SuggestionController
     cache: true
     lengthThreshold: 3
     take: 10
+    enable: true
     
   ### Event callbacks ###
   callbacks:
@@ -71,7 +72,10 @@ class SuggestionController
     
     @callbacks.initiateSuggestion?.call(@view)
 
-    @_currentPage = 1 if pagingVector == null
+    if pagingVector == null
+      @_currentPage = 1
+      pagingVector = 0
+      
     if @el.val()
       @_currentPage = @_currentPage + pagingVector
       @_currentPage = 1 if @_currentPage < 1

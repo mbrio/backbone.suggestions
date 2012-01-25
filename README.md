@@ -93,6 +93,8 @@ Options
     * `lengthThreshold` = Sets how many characters are need in order to
       begin suggesting.
       (default: 3)
+    * `enable` = Sets whether the system is enabled at start.
+      (default: true)
     * `take` = Sets how many items to retrieve from the query result
       set.
       (default: 10)

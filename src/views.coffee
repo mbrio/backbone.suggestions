@@ -6,6 +6,8 @@ class SuggestionView extends Backbone.View
   _controller: null
   _menu: null
   _previousValue: null
+  _blurTimeout = null
+  _donotBlur = false
   
   ### Templates that define the layout of the menu for each of it's states ###
   templates:
@@ -44,7 +46,8 @@ class SuggestionView extends Backbone.View
   _onkeydown: (event) => @_keydown event
   _onkeyup: (event) => @_keyup event
   _onfocus: (event) => @_focus event
-  _onclick: (event) -> event.stopImmediatePropagation()
+  _onblur: (event) => @_blur event
+  #_onclick: (event) -> event.stopImmediatePropagation()
   _documentClick: (event) => @hide()
     
   ### Initializes the object ###
@@ -72,7 +75,7 @@ class SuggestionView extends Backbone.View
     
   _enabled: ->
     @el.bind (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
-    @el.bind 'click', @_onclick
+    #@el.bind 'click', @_onclick
     @el.bind
       keyup: @_onkeyup
       blur: @_onblur
@@ -84,7 +87,7 @@ class SuggestionView extends Backbone.View
     @el.blur()
     
     @el.unbind (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
-    @el.unbind 'click', @_onclick
+    #@el.unbind 'click', @_onclick
     @el.unbind
       keyup: @_onkeyup
       blur: @_onblur
@@ -139,10 +142,6 @@ class SuggestionView extends Backbone.View
     return if @callbacks.keyDown?.call(this, event) == true
     
     switch event.keyCode
-      when KEYS.TAB
-        return unless @_menuVisible
-        @hide()
-              
       when KEYS.UP
         return unless @_menuVisible
         event.preventDefault()
@@ -189,7 +188,6 @@ class SuggestionView extends Backbone.View
     switch event.keyCode
       when KEYS.UP, KEYS.DOWN, KEYS.ENTER, KEYS.ESC
         if @_menuVisible then event.preventDefault()
-      when KEYS.TAB
       else
         if @_menuVisible and @_previousValue isnt @el.val()
           @_controller.suggest()
@@ -198,10 +196,17 @@ class SuggestionView extends Backbone.View
   ### Shows the menu when the element's focus event is fired ###
   _focus: (event) ->
     @_forceClosed = false
-    
+
     return if @_menuVisible
     @show()
     @_controller.suggest()
+    
+  
+  ### Hides the menu when the element's blur event is fired ###
+  _blur: (event) ->
+    unless @_donotBlur
+      callback = => @hide()
+      @_blurTimeout = setTimeout callback, 200
     
   ### Generates the menu HTML ###
   _generateMenu: ->
@@ -214,21 +219,17 @@ class SuggestionView extends Backbone.View
   show: ->
     return if @_menuVisible
     
-    $(document).bind 'click', @_documentClick
-    
+    clearTimeout @_blurTimeout
     @_menuVisible = true
     @_controller.halt()
     @render 'default'
-    
-    #@_position()
+
     @_menu.fadeIn
       duration: 200
       
   ### Hides the menu ###
   hide: ->
     return unless @_menuVisible
-    
-    $(document).unbind 'click', @_documentClick
         
     @_previousValue = null
     @_menuVisible = false
@@ -284,10 +285,12 @@ class SuggestionView extends Backbone.View
         
         if @_controller.get_current_page() > 1
           prevAction.click (event) =>
-            event.stopImmediatePropagation()
+            @_donotBlur = true
+            clearTimeout @_blurTimeout
             event.preventDefault()
             
             @el.focus()
+            @_donotBlur = false
             @_controller.suggest(PAGING_VECTOR.PREV)
                       
         else
@@ -296,10 +299,12 @@ class SuggestionView extends Backbone.View
 
         if parameters.cached.get('hasMore') == true
           nextAction.click (event) =>
-            event.stopImmediatePropagation()
+            @_donotBlur = true
+            clearTimeout @_blurTimeout
             event.preventDefault()
             
             @el.focus()
+            @_donotBlur = false
             @_controller.suggest(PAGING_VECTOR.NEXT)
           
         else
