@@ -12,7 +12,7 @@ class SuggestionView extends Backbone.View
     container: _.template('<div class="<%= cssClass %>"></div>')
     default: _.template('<span class="message default">Begin typing for suggestions</span>')
     loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
-    loadedList: _.template('<ol class="<%= cssClass %>"></ol><span class="<%= morePanelCssClass %>"><a href="javascript:void(0)" class="<%= moreActionCssClass %>">More</a></span>')
+    loadedList: _.template('<ol class="<%= cssClass %>"></ol><ol class="<%= pagingPanelCssClass %>"><li><a href="javascript:void(0)" class="<%= prevActionCssClass %>">Prev</a></li><li><a href="javascript:void(0)" class="<%= nextActionCssClass %>">Next</a></li></ol>')
     loadedItem: _.template('<li class="<%= cssClass %>"><a href="javascript:void(0)" class="<%= actionCssClass %>"><%= value %></a></li>')
     empty: _.template('<span class="message empty">No suggestions were found</span>')
     error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
@@ -28,8 +28,9 @@ class SuggestionView extends Backbone.View
   options:
     zIndex: 500
     cssClass: 'suggestions-menu'
-    morePanelCssClass: 'suggestions-more-panel'
-    moreActionCssClass: 'suggestions-more-action'
+    pagingPanelCssClass: 'suggestions-paging-panel'
+    nextActionCssClass: 'suggestions-next-action'
+    prevActionCssClass: 'suggestions-prev-action'
     loadedListCssClass: 'suggestions-loaded-list'
     listItemCssClass: 'suggestions-list-item'
     listItemActionCssClass: 'suggestions-list-item-action'
@@ -38,6 +39,7 @@ class SuggestionView extends Backbone.View
     templates: null
     callbacks: null
     valueField: 'value'
+    paging: true
   
   _onkeydown: (event) => @_keydown event
   _onkeyup: (event) => @_keyup event
@@ -55,7 +57,7 @@ class SuggestionView extends Backbone.View
       initiateSuggestion: => @_initiateSuggestion()
       checkingLengthThreshold: (does_meet) => @_checkingLengthThreshold(does_meet)
       suggesting: => @_suggesting()
-      suggested: (cached, paging) => @_suggested(cached, paging)
+      suggested: (cached, pagingVector) => @_suggested(cached, pagingVector)
       error: (jqXHR, textStatus, errorThrown) => @_error(jqXHR, textStatus, errorThrown)
       loading: => @_loading()
       enabled: => @_enabled()
@@ -116,10 +118,10 @@ class SuggestionView extends Backbone.View
     @render 'loading'
         
   ### Callback for when a suggestions is completed ###
-  _suggested: (cached, paging) ->
+  _suggested: (cached, pagingVector) ->
     @callbacks.suggested?.call(this, cached)
     suggestions = cached.get('suggestions')
-    if suggestions.length > 0 then @render 'loaded', { cached: cached, paging: paging } else @render 'empty'
+    if suggestions.length > 0 then @render 'loaded', { cached: cached, pagingVector: pagingVector } else @render 'empty'
     
   ### Callback for when there is an AJAX error durion a suggestion ###
   _error: (jqXHR, textStatus, errorThrown) ->
@@ -259,11 +261,12 @@ class SuggestionView extends Backbone.View
       when 'loaded'
         list = $(@templates.loadedList(
           cssClass: @options.loadedListCssClass
-          morePanelCssClass: @options.morePanelCssClass
-          moreActionCssClass: @options.moreActionCssClass));
+          pagingPanelCssClass: @options.pagingPanelCssClass
+          prevActionCssClass: @options.prevActionCssClass
+          nextActionCssClass: @options.nextActionCssClass));
 
         container = @filterFind(list, ".#{@options.loadedListCssClass}")
-      
+
         suggestions = parameters.cached.get('suggestions')
         for suggestion in suggestions
           suggestion.cssClass = @options.listItemCssClass
@@ -275,18 +278,35 @@ class SuggestionView extends Backbone.View
       
         @_menu.append list
       
-        if (parameters.cached.get('hasMore') == true)
-          moreAction = @filterFind(list, ".#{@options.moreActionCssClass}")
-          moreAction.click (event) =>
+        nextAction = @filterFind(list, ".#{@options.nextActionCssClass}")
+        prevAction = @filterFind(list, ".#{@options.prevActionCssClass}")
+        actionsRemoved = 0
+        
+        if @_controller.get_current_page() > 1
+          prevAction.click (event) =>
             event.stopImmediatePropagation()
             event.preventDefault()
             
             @el.focus()
-            @_controller.suggest(true)
+            @_controller.suggest(PAGING_VECTOR.PREV)
+                      
+        else
+          prevAction.remove()
+          actionsRemoved++
+
+        if parameters.cached.get('hasMore') == true
+          nextAction.click (event) =>
+            event.stopImmediatePropagation()
+            event.preventDefault()
+            
+            @el.focus()
+            @_controller.suggest(PAGING_VECTOR.NEXT)
           
         else
-          panel = @filterFind(@_menu, ".#{@options.morePanelCssClass}")
-          panel.remove()
+          nextAction.remove()
+          actionsRemoved++
+          
+        @filterFind(list, ".#{@options.pagingPanelCssClass}").remove() if actionsRemoved == 2 or @options.paging == false
        
       
         @filterFind(list, ".#{@options.listItemCssClass}:first-child").addClass('selected')

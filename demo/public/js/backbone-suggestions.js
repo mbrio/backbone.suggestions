@@ -1,12 +1,12 @@
 /*
-backbone.suggestions.js 0.8.0
+backbone.suggestions.js 0.8.1
 Copyright (c) 2011-2012 Michael Diolosa, <michael.diolosa@gmail.com>
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
 https://github.com/mbrio/backbone.suggestions/wiki/License
 */
 (function() {
-  var $, Cache, CacheCollection, KEYS, SuggestionController, SuggestionView, Suggestions, root;
+  var $, Cache, CacheCollection, KEYS, PAGING_VECTOR, SuggestionController, SuggestionView, Suggestions, root;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   $ = jQuery;
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.8.0';
+  Suggestions.version = '0.8.1';
 
   KEYS = {
     UP: 38,
@@ -23,6 +23,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     ENTER: 13,
     ESC: 27,
     TAB: 9
+  };
+
+  PAGING_VECTOR = {
+    NEXT: 1,
+    PREV: -1
   };
 
   Cache = (function() {
@@ -149,6 +154,10 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       return this.is_enabled() && this.meets_length_threshold();
     };
 
+    SuggestionController.prototype.get_current_page = function() {
+      return this._currentPage;
+    };
+
     SuggestionController.prototype.meets_length_threshold = function() {
       return this.el.val().length >= this.options.lengthThreshold;
     };
@@ -172,9 +181,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     /* Initializes a suggestion
     */
 
-    SuggestionController.prototype.suggest = function(paging) {
+    SuggestionController.prototype.suggest = function(pagingVector) {
       var _ref, _ref2, _ref3;
-      if (paging == null) paging = false;
+      if (pagingVector == null) pagingVector = null;
       this.halt();
       if ((_ref = this.callbacks.checkingLengthThreshold) != null) {
         _ref.call(this.view, this.meets_length_threshold());
@@ -183,13 +192,14 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       if ((_ref2 = this.callbacks.initiateSuggestion) != null) {
         _ref2.call(this.view);
       }
-      if (paging === false) this._currentPage = 1;
+      if (pagingVector === null) this._currentPage = 1;
       if (this.el.val()) {
-        if (paging === true) this._currentPage++;
+        this._currentPage = this._currentPage + pagingVector;
+        if (this._currentPage < 1) this._currentPage = 1;
         if ((_ref3 = this.callbacks.suggesting) != null) {
-          _ref3.call(this.view, paging);
+          _ref3.call(this.view, pagingVector);
         }
-        return this._timeout = setTimeout(this._suggestionMethod(this.el.val(), paging), this.options.timeout);
+        return this._timeout = setTimeout(this._suggestionMethod(this.el.val(), pagingVector), this.options.timeout);
       }
     };
 
@@ -205,7 +215,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     /* Determines whether to use locally cached or remotely called data
     */
 
-    SuggestionController.prototype._suggestionMethod = function(key, paging) {
+    SuggestionController.prototype._suggestionMethod = function(key, pagingVector) {
       var cached;
       var _this = this;
       key = this.ajax.url.replace(':query', key.toLowerCase());
@@ -215,11 +225,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       cached = this._findCache(key);
       if (cached != null) {
         return function() {
-          return _this._local(cached, paging);
+          return _this._local(cached, pagingVector);
         };
       } else {
         return function() {
-          return _this._ajax(key, paging);
+          return _this._ajax(key, pagingVector);
         };
       }
     };
@@ -227,16 +237,16 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     /* Complete suggestion with local data
     */
 
-    SuggestionController.prototype._local = function(cached, paging) {
+    SuggestionController.prototype._local = function(cached, pagingVector) {
       var _ref;
-      return (_ref = this.callbacks.suggested) != null ? _ref.call(this.view, cached, paging) : void 0;
+      return (_ref = this.callbacks.suggested) != null ? _ref.call(this.view, cached, pagingVector) : void 0;
     };
 
     /* Retrieve remote data and cache it prior to completing suggestion with
         local data
     */
 
-    SuggestionController.prototype._ajax = function(key, paging) {
+    SuggestionController.prototype._ajax = function(key, pagingVector) {
       var ajaxOptions, _ref, _ref2;
       var _this = this;
       if ((_ref = this.callbacks.loading) != null) _ref.call(this.view);
@@ -245,7 +255,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         success: function(data) {
           var _base, _ref2;
           _this._request = null;
-          _this._processAjax(key.toLowerCase(), data != null ? data.suggestions : void 0, paging, (_ref2 = data != null ? data.hasMore : void 0) != null ? _ref2 : false);
+          _this._processAjax(key.toLowerCase(), data != null ? data.suggestions : void 0, pagingVector, (_ref2 = data != null ? data.hasMore : void 0) != null ? _ref2 : false);
           return typeof (_base = _this.ajax).success === "function" ? _base.success(data) : void 0;
         },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -267,7 +277,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         data
     */
 
-    SuggestionController.prototype._processAjax = function(key, suggestions, paging, hasMore) {
+    SuggestionController.prototype._processAjax = function(key, suggestions, pagingVector, hasMore) {
       var cached;
       cached = new Cache({
         timestamp: new Date,
@@ -280,7 +290,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         this._cache.add(cached);
         this._save();
       }
-      return this._local(cached, paging);
+      return this._local(cached, pagingVector);
     };
 
     /* Methods for managing the cache
@@ -392,7 +402,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       container: _.template('<div class="<%= cssClass %>"></div>'),
       "default": _.template('<span class="message default">Begin typing for suggestions</span>'),
       loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>'),
-      loadedList: _.template('<ol class="<%= cssClass %>"></ol><span class="<%= morePanelCssClass %>"><a href="javascript:void(0)" class="<%= moreActionCssClass %>">More</a></span>'),
+      loadedList: _.template('<ol class="<%= cssClass %>"></ol><ol class="<%= pagingPanelCssClass %>"><li><a href="javascript:void(0)" class="<%= prevActionCssClass %>">Prev</a></li><li><a href="javascript:void(0)" class="<%= nextActionCssClass %>">Next</a></li></ol>'),
       loadedItem: _.template('<li class="<%= cssClass %>"><a href="javascript:void(0)" class="<%= actionCssClass %>"><%= value %></a></li>'),
       empty: _.template('<span class="message empty">No suggestions were found</span>'),
       error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
@@ -414,8 +424,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionView.prototype.options = {
       zIndex: 500,
       cssClass: 'suggestions-menu',
-      morePanelCssClass: 'suggestions-more-panel',
-      moreActionCssClass: 'suggestions-more-action',
+      pagingPanelCssClass: 'suggestions-paging-panel',
+      nextActionCssClass: 'suggestions-next-action',
+      prevActionCssClass: 'suggestions-prev-action',
       loadedListCssClass: 'suggestions-loaded-list',
       listItemCssClass: 'suggestions-list-item',
       listItemActionCssClass: 'suggestions-list-item-action',
@@ -423,7 +434,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       enableForceClose: true,
       templates: null,
       callbacks: null,
-      valueField: 'value'
+      valueField: 'value',
+      paging: true
     };
 
     SuggestionView.prototype._onkeydown = function(event) {
@@ -469,8 +481,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         suggesting: function() {
           return _this._suggesting();
         },
-        suggested: function(cached, paging) {
-          return _this._suggested(cached, paging);
+        suggested: function(cached, pagingVector) {
+          return _this._suggested(cached, pagingVector);
         },
         error: function(jqXHR, textStatus, errorThrown) {
           return _this._error(jqXHR, textStatus, errorThrown);
@@ -566,14 +578,14 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     /* Callback for when a suggestions is completed
     */
 
-    SuggestionView.prototype._suggested = function(cached, paging) {
+    SuggestionView.prototype._suggested = function(cached, pagingVector) {
       var suggestions, _ref;
       if ((_ref = this.callbacks.suggested) != null) _ref.call(this, cached);
       suggestions = cached.get('suggestions');
       if (suggestions.length > 0) {
         return this.render('loaded', {
           cached: cached,
-          paging: paging
+          pagingVector: pagingVector
         });
       } else {
         return this.render('empty');
@@ -751,7 +763,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype.render = function(state, parameters) {
-      var container, li, list, moreAction, panel, suggestion, suggestions, _i, _len;
+      var actionsRemoved, container, li, list, nextAction, prevAction, suggestion, suggestions, _i, _len;
       var _this = this;
       this._menu.empty();
       switch (state) {
@@ -762,8 +774,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         case 'loaded':
           list = $(this.templates.loadedList({
             cssClass: this.options.loadedListCssClass,
-            morePanelCssClass: this.options.morePanelCssClass,
-            moreActionCssClass: this.options.moreActionCssClass
+            pagingPanelCssClass: this.options.pagingPanelCssClass,
+            prevActionCssClass: this.options.prevActionCssClass,
+            nextActionCssClass: this.options.nextActionCssClass
           }));
           container = this.filterFind(list, "." + this.options.loadedListCssClass);
           suggestions = parameters.cached.get('suggestions');
@@ -776,17 +789,33 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
             container.append(li);
           }
           this._menu.append(list);
-          if (parameters.cached.get('hasMore') === true) {
-            moreAction = this.filterFind(list, "." + this.options.moreActionCssClass);
-            moreAction.click(function(event) {
+          nextAction = this.filterFind(list, "." + this.options.nextActionCssClass);
+          prevAction = this.filterFind(list, "." + this.options.prevActionCssClass);
+          actionsRemoved = 0;
+          if (this._controller.get_current_page() > 1) {
+            prevAction.click(function(event) {
               event.stopImmediatePropagation();
               event.preventDefault();
               _this.el.focus();
-              return _this._controller.suggest(true);
+              return _this._controller.suggest(PAGING_VECTOR.PREV);
             });
           } else {
-            panel = this.filterFind(this._menu, "." + this.options.morePanelCssClass);
-            panel.remove();
+            prevAction.remove();
+            actionsRemoved++;
+          }
+          if (parameters.cached.get('hasMore') === true) {
+            nextAction.click(function(event) {
+              event.stopImmediatePropagation();
+              event.preventDefault();
+              _this.el.focus();
+              return _this._controller.suggest(PAGING_VECTOR.NEXT);
+            });
+          } else {
+            nextAction.remove();
+            actionsRemoved++;
+          }
+          if (actionsRemoved === 2 || this.options.paging === false) {
+            this.filterFind(list, "." + this.options.pagingPanelCssClass).remove();
           }
           this.filterFind(list, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
           return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).click(function(event) {

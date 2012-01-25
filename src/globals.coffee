@@ -11,3 +11,7 @@ KEYS =
   ENTER: 13
   ESC: 27
   TAB: 9
+  
+PAGING_VECTOR =
+  NEXT: 1
+  PREV: -1

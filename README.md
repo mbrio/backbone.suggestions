@@ -80,16 +80,24 @@ Options
       [jQuery documentation](http://api.jquery.com/jQuery.ajax/) for more
       information.
         * `url` = The URL of the REST action, any reference to `:query` within
-          the string will be replaced by the text within the input box.
-          (default: '/suggestions?q=:query')
+          the string will be replaced by the text within the input box. The
+          values for `:page` will be replaced with the requested page, and
+          `:take` will be replaced by how many items to take from the
+          response.
+          (default: '/suggestions?p=:page&t=:take&q=:query')
         * `dataType` = The type of data that you're expecting back from the
           server.
           (default: 'json')
     * `cache` = Enables or disables caching results in localStorage
       (default: true)
-    * `lengthThreshold` = Determines how many characters are need in order to
+    * `lengthThreshold` = Sets how many characters are need in order to
       begin suggesting.
       (default: 3)
+    * `take` = Sets how many items to retrieve from the query result
+      set.
+      (default: 10)
+    * `paging` = Sets whether to use paging or not.
+      (default: true)
     * `valueField` = The property of the JSON data that represents the textual
       value of the data object.
       (default: 'value')
@@ -101,8 +109,9 @@ Options
         (default: 500)
     * `cssClass` = The CSS class that is applied to the containing element.
       (default: 'suggestions-menu')
-      moreActionCssClass
-      morePanelCssClass
+    * `nextActionCssClass` = The CSS class for the next action element.
+    * `prevActionCssClass` = The CSS class for the previous action element.
+    * `pagingPanelCssClass` = The CSS class for the paging container element.
     * `loadedListCssClass` = The CSS class that is applied to the list
       element.
       (default: 'suggestions-loaded-list')
@@ -165,7 +174,7 @@ Example
     view = new Suggestions.View({
       el: $('input[type="text"].suggestions'),
       ajax: {
-        url: '/suggestions.json?q=:query'
+        url: '/suggestions.json?p=:page&t=:take&q=:query'
       }
     });
       
@@ -178,13 +187,13 @@ for each of the templates must result in a function.
     view = new Suggestions.View({
       el: $('input[type="text"].suggestions'),
       ajax: {
-        url: '/suggestions.json?q=:query'
+        url: '/suggestions.json?p=:page&t=:take&q=:query'
       },
       templates: {
         container: _.template('<div class="<%= cssClass %>"></div>')
         default: _.template('<span class="message default">Begin typing for suggestions</span>')
         loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
-        loadedList: _.template('<ol class="<%= cssClass %>"></ol><span class="<%= morePanelCssClass %>"><a href="javascript:void(0)" class="<%= moreActionCssClass %>">More</a></span>')
+        loadedList: _.template('<ol class="<%= cssClass %>"></ol><ol class="<%= pagingPanelCssClass %>"><li><a href="javascript:void(0)" class="<%= prevActionCssClass %>">Prev</a></li><li><a href="javascript:void(0)" class="<%= nextActionCssClass %>">Next</a></li></ol>')
         loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>')
         empty: _.template('<span class="message empty">No suggestions were found</span>')
         error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
@@ -377,6 +386,37 @@ contains the element that represents the more button.
 **After**
 
    loadedList: _.template('<ol class="<%= cssClass %>"></ol><span class="<%= morePanelCssClass %>"><a href="javascript:void(0)" class="<%= moreActionCssClass %>">More</a></span>')
+
+Upgrading to Version 0.8.1
+---
+The `moreActionCssClass` parameter has been renamed to `nextActionCssClass`
+and the `morePanelCssClass` has been renamed to `pagingPanelCssClass`.
+
+Along with this the template for `loadedList` has changed to support a
+previous button.
+
+   loadedList: _.template('<ol class="<%= cssClass %>"></ol><ol class="<%= pagingPanelCssClass %>"><li><a href="javascript:void(0)" class="<%= prevActionCssClass %>">Prev</a></li><li><a href="javascript:void(0)" class="<%= nextActionCssClass %>">Next</a></li></ol>')
+   
+Another service update has been made in this version, you can now pass in both
+the page number and how many items to take from the result set.
+
+**Before**
+
+    view = new Suggestions.View({
+      el: $('input[type="text"].suggestions'),
+      ajax: {
+        url: '/suggestions.json?q=:query'
+      }
+    });
+    
+**After**
+
+view = new Suggestions.View({
+  el: $('input[type="text"].suggestions'),
+  ajax: {
+    url: '/suggestions.json?p=:page&t=:take&q=:query'
+  }
+});
 
 License
 ---

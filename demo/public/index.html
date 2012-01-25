@@ -67,8 +67,7 @@
       sv = new Suggestions.View({
         el: $('input[type="text"].suggestions'),
         ajax: { url: '/suggestions.json?p=:page&t=:take&q=:query' },
-        cache: false,
-        take: 1
+        cache: false
       });
     });
   </script>

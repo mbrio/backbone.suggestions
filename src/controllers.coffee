@@ -45,6 +45,9 @@ class SuggestionController
   can_suggest: ->
     @is_enabled() && @meets_length_threshold()
     
+  get_current_page: ->
+    @_currentPage
+    
   meets_length_threshold: ->
     @el.val().length >= @options.lengthThreshold
     
@@ -61,18 +64,20 @@ class SuggestionController
     @callbacks.disabled?.call(@view)
     
   ### Initializes a suggestion ###
-  suggest: (paging = false) ->
+  suggest: (pagingVector = null) ->
     @halt();
     @callbacks.checkingLengthThreshold?.call(@view, @meets_length_threshold())
     return unless @can_suggest()
     
     @callbacks.initiateSuggestion?.call(@view)
 
-    @_currentPage = 1 if paging == false
+    @_currentPage = 1 if pagingVector == null
     if @el.val()
-      @_currentPage++ if paging == true
-      @callbacks.suggesting?.call(@view, paging)
-      @_timeout = setTimeout @_suggestionMethod(@el.val(), paging), (@options.timeout)
+      @_currentPage = @_currentPage + pagingVector
+      @_currentPage = 1 if @_currentPage < 1
+      
+      @callbacks.suggesting?.call(@view, pagingVector)
+      @_timeout = setTimeout @_suggestionMethod(@el.val(), pagingVector), (@options.timeout)
     
   ### Halts any AJAX requests and timeouts ###
   halt: ->
@@ -80,7 +85,7 @@ class SuggestionController
     clearTimeout @_timeout if @_timeout?
 
   ### Determines whether to use locally cached or remotely called data ###
-  _suggestionMethod: (key, paging) ->
+  _suggestionMethod: (key, pagingVector) ->
     key = (@ajax.url).replace ':query', key.toLowerCase()
     key = key.replace ':page', @_currentPage
     key = key.replace ':take', @options.take
@@ -89,15 +94,15 @@ class SuggestionController
     
     cached = @_findCache(key)
   
-    if cached? then () => @_local(cached, paging) else () => @_ajax(key, paging)
+    if cached? then () => @_local(cached, pagingVector) else () => @_ajax(key, pagingVector)
     
   ### Complete suggestion with local data ###
-  _local: (cached, paging) ->    
-    @callbacks.suggested?.call(@view, cached, paging)
+  _local: (cached, pagingVector) ->    
+    @callbacks.suggested?.call(@view, cached, pagingVector)
     
   ### Retrieve remote data and cache it prior to completing suggestion with
       local data ###
-  _ajax: (key, paging) ->
+  _ajax: (key, pagingVector) ->
     @callbacks.loading?.call(@view)
 
     ajaxOptions =
@@ -105,7 +110,7 @@ class SuggestionController
       success: (data) =>
         @_request = null
       
-        @_processAjax key.toLowerCase(), data?.suggestions, paging, data?.hasMore ? false
+        @_processAjax key.toLowerCase(), data?.suggestions, pagingVector, data?.hasMore ? false
         @ajax.success? data
       error: (jqXHR, textStatus, errorThrown) =>
         @callbacks.error?.call(@view, jqXHR, textStatus, errorThrown)
@@ -117,7 +122,7 @@ class SuggestionController
         
   ### Process the retrieved data prior to completing the suggestion with local
       data ###
-  _processAjax: (key, suggestions, paging, hasMore) ->
+  _processAjax: (key, suggestions, pagingVector, hasMore) ->
     cached = new Cache
       timestamp: new Date
       key: key
@@ -129,7 +134,7 @@ class SuggestionController
       @_cache.add cached
       @_save()
     
-    @_local(cached, paging)
+    @_local(cached, pagingVector)
     
   ### Methods for managing the cache ###
   
