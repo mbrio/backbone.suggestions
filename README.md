@@ -146,6 +146,8 @@ Options
         * `suggested(paging)` = The callback that is executed when suggestions
           are displayed. The only parameter passed is whether the method is
           paging.
+        * `show` = The callback that is executed when the menu is shown.
+        * `hide` = The callback that is executed when the menu is hidden.
         * `loading` = The callback that is executed when a remote call is
           loading.
         * `error` = The callback that is executed when an AJAX error occurs.

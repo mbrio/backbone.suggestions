@@ -25,6 +25,8 @@ class SuggestionView extends Backbone.View
     abort: null
     keyDown: null
     keyUp: null
+    show: null
+    hide: null
   
   ### Default options ###
   options:
@@ -47,8 +49,6 @@ class SuggestionView extends Backbone.View
   _onkeyup: (event) => @_keyup event
   _onfocus: (event) => @_focus event
   _onblur: (event) => @_blur event
-  #_onclick: (event) -> event.stopImmediatePropagation()
-  _documentClick: (event) => @hide()
     
   ### Initializes the object ###
   initialize: ->
@@ -75,7 +75,6 @@ class SuggestionView extends Backbone.View
     
   _enabled: ->
     @el.bind (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
-    #@el.bind 'click', @_onclick
     @el.bind
       keyup: @_onkeyup
       blur: @_onblur
@@ -87,7 +86,6 @@ class SuggestionView extends Backbone.View
     @el.blur()
     
     @el.unbind (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
-    #@el.unbind 'click', @_onclick
     @el.unbind
       keyup: @_onkeyup
       blur: @_onblur
@@ -219,6 +217,7 @@ class SuggestionView extends Backbone.View
   show: ->
     return if @_menuVisible
     
+    @callbacks.show?.call(this)
     clearTimeout @_blurTimeout
     @_menuVisible = true
     @_controller.halt()
@@ -230,7 +229,8 @@ class SuggestionView extends Backbone.View
   ### Hides the menu ###
   hide: ->
     return unless @_menuVisible
-        
+
+    @callbacks.hide?.call(this)
     @_previousValue = null
     @_menuVisible = false
     @_controller.halt()

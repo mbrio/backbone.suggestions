@@ -379,7 +379,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     __extends(SuggestionView, Backbone.View);
 
     function SuggestionView() {
-      this._documentClick = __bind(this._documentClick, this);
       this._onblur = __bind(this._onblur, this);
       this._onfocus = __bind(this._onfocus, this);
       this._onkeyup = __bind(this._onkeyup, this);
@@ -461,10 +460,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype._onblur = function(event) {
       return this._blur(event);
-    };
-
-    SuggestionView.prototype._documentClick = function(event) {
-      return this.hide();
     };
 
     /* Initializes the object
