@@ -45,15 +45,15 @@ enables AJAX autocompletion backed by a localStorage cache for text input
 fields.
 
 There is no need to add HTML to your document to display the suggestion menu.
-A `&lt;div&gt;` element will be generated and placed within the `document.body`
+A `<div>` element will be generated and placed within the `document.body`
 element.
   
-    &lt;div class="suggestions-menu"&gt;
-      &lt;ol&gt;
-        &lt;li class="selected"&gt;Alabama&lt;/li&gt;
-        &lt;li&gt;Alaska&lt;/li&gt;
-      &lt;/ol&gt;
-    &lt;/div&gt;
+    <div class="suggestions-menu">
+      <ol>
+        <li class="selected">Alabama</li>
+        <li>Alaska</li>
+      </ol>
+    </div>
     
 Demo
 ---
@@ -105,7 +105,7 @@ Options
       (default: 500)
     * `expiresIn` = The expiration duration of cached results.
       (default: 0.5 days)
-    * `zIndex` = The z-index of the `&lt;div&gt;` containing element.
+    * `zIndex` = The z-index of the `<div>` containing element.
         (default: 500)
     * `cssClass` = The CSS class that is applied to the containing element.
       (default: 'suggestions-menu')
@@ -119,7 +119,7 @@ Options
       (default: 'suggestions-list-item')
     * `listItemActionCssClass` = The CSS class that is applied to each item
       in the list that emits the click event, in the default template it's
-      applied to an anchor (&lt;a&gt;) tag.
+      applied to an anchor (<a>) tag.
       (default: 'suggestions-list-item-action')
     * `offsetLeft` = The number of pixels to offset the position of the popup
       to by the `left` CSS property, position starts at the bottom left corner
@@ -127,7 +127,7 @@ Options
     * `offsetTop` = The number of pixels to offset the position of the popup
       to by the `top` CSS property, position starts at the bottom left corner
       of the input field. (default: 0)
-    * `selectedCssClass` = The CSS class that is applied to the `&lt;li&gt;` element
+    * `selectedCssClass` = The CSS class that is applied to the `<li>` element
       that is selected. (default: 'selected')
     * `enableForceClose` = Enables or disables auto-complete windows closing
       when the `esc` key is pressed. (default: true)
@@ -190,13 +190,13 @@ for each of the templates must result in a function.
         url: '/suggestions.json?p=:page&t=:take&q=:query'
       },
       templates: {
-        container: _.template('&lt;div class="&lt;%= cssClass %&gt;"&gt;&lt;/div&gt;')
-        default: _.template('&lt;span class="message default"&gt;Begin typing for suggestions&lt;/span&gt;')
-        loading: _.template('&lt;span class="message loading"&gt;Begin typing for suggestions (Loading...)&lt;/span&gt;')
-        loadedList: _.template('&lt;ol class="&lt;%= cssClass %&gt;"&gt;&lt;/ol&gt;&lt;ol class="&lt;%= pagingPanelCssClass %&gt;"&gt;&lt;li&gt;&lt;a href="javascript:void(0)" class="&lt;%= prevActionCssClass %&gt;"&gt;Prev&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="javascript:void(0)" class="&lt;%= nextActionCssClass %&gt;"&gt;Next&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;')
-        loadedItem: _.template('&lt;li class="&lt;%= cssClass %&gt;"&gt;&lt;a href="#" class="&lt;%= actionCssClass %&gt;"&gt;&lt;%= value %&gt;&lt;/a&gt;&lt;/li&gt;')
-        empty: _.template('&lt;span class="message empty"&gt;No suggestions were found&lt;/span&gt;')
-        error: _.template('&lt;span class="message error"&gt;An error has occurred while retrieving data&lt;/span&gt;')
+        container: _.template('<div class="<%= cssClass %>"></div>')
+        default: _.template('<span class="message default">Begin typing for suggestions</span>')
+        loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
+        loadedList: _.template('<ol class="<%= cssClass %>"></ol><ol class="<%= pagingPanelCssClass %>"><li><a href="javascript:void(0)" class="<%= prevActionCssClass %>">Prev</a></li><li><a href="javascript:void(0)" class="<%= nextActionCssClass %>">Next</a></li></ol>')
+        loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>')
+        empty: _.template('<span class="message empty">No suggestions were found</span>')
+        error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
       }
     });
 
@@ -312,7 +312,7 @@ options to the view:
         selected: function() { console.log('selected'); }
       },
       templates: {
-        loadedItem: _.template('&lt;li class="&lt;%= cssClass %&gt;"&gt;&lt;a href="#" class="&lt;%= actionCssClass %&gt;"&gt;&lt;%= name %&gt;&lt;/a&gt;&lt;/li&gt;'),
+        loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= name %></a></li>'),
       }
     });
 
@@ -325,23 +325,23 @@ be converted to the new template structure.
 
 **Before**
 
-   container: _.template('&lt;div&gt;&lt;/div&gt;')
-   default: _.template('&lt;span class="message default"&gt;Begin typing for suggestions&lt;/span&gt;')
-   loading: _.template('&lt;span class="message loading"&gt;Begin typing for suggestions (Loading...)&lt;/span&gt;')
-   loadedList: _.template('&lt;ol&gt;&lt;/ol&gt;')
-   loadedItem: _.template('&lt;li&gt;&lt;a href="#"&gt;&lt;%= value %&gt;&lt;/a&gt;&lt;/li&gt;')
-   empty: _.template('&lt;span class="message empty"&gt;No suggestions were found&lt;/span&gt;')
-   error: _.template('&lt;span class="message error"&gt;An error has occurred while retrieving data&lt;/span&gt;')
+    container: _.template('<div></div>')
+    default: _.template('<span class="message default">Begin typing for suggestions</span>')
+    loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
+    loadedList: _.template('<ol></ol>')
+    loadedItem: _.template('<li><a href="#"><%= value %></a></li>')
+    empty: _.template('<span class="message empty">No suggestions were found</span>')
+    error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
 
 **After**
 
-   container: _.template('&lt;div class="&lt;%= cssClass %&gt;"&gt;&lt;/div&gt;')
-   default: _.template('&lt;span class="message default"&gt;Begin typing for suggestions&lt;/span&gt;')
-   loading: _.template('&lt;span class="message loading"&gt;Begin typing for suggestions (Loading...)&lt;/span&gt;')
-   loadedList: _.template('&lt;ol class="&lt;%= cssClass %&gt;"&gt;&lt;/ol&gt;')
-   loadedItem: _.template('&lt;li class="&lt;%= cssClass %&gt;"&gt;&lt;a href="#" class="&lt;%= actionCssClass %&gt;"&gt;&lt;%= value %&gt;&lt;/a&gt;&lt;/li&gt;')
-   empty: _.template('&lt;span class="message empty"&gt;No suggestions were found&lt;/span&gt;')
-   error: _.template('&lt;span class="message error"&gt;An error has occurred while retrieving data&lt;/span&gt;')
+    container: _.template('<div class="<%= cssClass %>"></div>')
+    default: _.template('<span class="message default">Begin typing for suggestions</span>')
+    loading: _.template('<span class="message loading">Begin typing for suggestions (Loading...)</span>')
+    loadedList: _.template('<ol class="<%= cssClass %>"></ol>')
+    loadedItem: _.template('<li class="<%= cssClass %>"><a href="#" class="<%= actionCssClass %>"><%= value %></a></li>')
+    empty: _.template('<span class="message empty">No suggestions were found</span>')
+    error: _.template('<span class="message error">An error has occurred while retrieving data</span>')
    
 Upgrading to Version 0.8.0
 ---
@@ -381,11 +381,11 @@ contains the element that represents the more button.
 
 **Before**
 
-   loadedList: _.template('&lt;ol class="&lt;%= cssClass %&gt;"&gt;&lt;/ol&gt;')
+    loadedList: _.template('<ol class="<%= cssClass %>"></ol>')
    
 **After**
 
-   loadedList: _.template('&lt;ol class="&lt;%= cssClass %&gt;"&gt;&lt;/ol&gt;&lt;span class="&lt;%= morePanelCssClass %&gt;"&gt;&lt;a href="javascript:void(0)" class="&lt;%= moreActionCssClass %&gt;"&gt;More&lt;/a&gt;&lt;/span&gt;')
+    loadedList: _.template('<ol class="<%= cssClass %>"></ol><span class="<%= morePanelCssClass %>"><a href="javascript:void(0)" class="<%= moreActionCssClass %>">More</a></span>')
 
 Upgrading to Version 0.8.1
 ---
@@ -395,7 +395,7 @@ and the `morePanelCssClass` has been renamed to `pagingPanelCssClass`.
 Along with this the template for `loadedList` has changed to support a
 previous button.
 
-   loadedList: _.template('&lt;ol class="&lt;%= cssClass %&gt;"&gt;&lt;/ol&gt;&lt;ol class="&lt;%= pagingPanelCssClass %&gt;"&gt;&lt;li&gt;&lt;a href="javascript:void(0)" class="&lt;%= prevActionCssClass %&gt;"&gt;Prev&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="javascript:void(0)" class="&lt;%= nextActionCssClass %&gt;"&gt;Next&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;')
+    loadedList: _.template('<ol class="<%= cssClass %>"></ol><ol class="<%= pagingPanelCssClass %>"><li><a href="javascript:void(0)" class="<%= prevActionCssClass %>">Prev</a></li><li><a href="javascript:void(0)" class="<%= nextActionCssClass %>">Next</a></li></ol>')
    
 Another service update has been made in this version, you can now pass in both
 the page number and how many items to take from the result set.
@@ -411,16 +411,16 @@ the page number and how many items to take from the result set.
     
 **After**
 
-view = new Suggestions.View({
-  el: $('input[type="text"].suggestions'),
-  ajax: {
-    url: '/suggestions.json?p=:page&t=:take&q=:query'
-  }
-});
+    view = new Suggestions.View({
+      el: $('input[type="text"].suggestions'),
+      ajax: {
+        url: '/suggestions.json?p=:page&t=:take&q=:query'
+      }
+    });
 
 License
 ---
-Copyright (c) 2011-2012 Michael Diolosa &lt;[michael.diolosa@gmail.com](michael.diolosa@gmail.com)&gt;
+Copyright (c) 2011-2012 Michael Diolosa <[michael.diolosa@gmail.com](michael.diolosa@gmail.com)>
 
 The backbone.suggestions.js library is licensed under the MIT license. For
 more information see the [Wiki](https://github.com/mbrio/backbone.suggestions/wiki/License).
