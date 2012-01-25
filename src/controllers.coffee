@@ -90,8 +90,6 @@ class SuggestionController
     key = key.replace ':page', @_currentPage
     key = key.replace ':take', @options.take
     
-    console.log(key)
-    
     cached = @_findCache(key)
   
     if cached? then () => @_local(cached, pagingVector) else () => @_ajax(key, pagingVector)
