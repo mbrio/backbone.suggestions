@@ -81,7 +81,7 @@ class SuggestionController
       @_currentPage = 1 if @_currentPage < 1
       
       @callbacks.suggesting?.call(@view, pagingVector)
-      @_timeout = setTimeout @_suggestionMethod(@el.val(), pagingVector), (@optionstimeout)
+      @_timeout = setTimeout @_suggestionMethod(@el.val(), pagingVector), (@options.timeout)
     
   ### Halts any AJAX requests and timeouts ###
   halt: ->
