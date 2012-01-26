@@ -1,7 +1,7 @@
 {
   "name"          : "backbone.suggestions",
   "description"   : "An autocompletion view for Backbone.js",
-  "version"       : "0.8.5",
+  "version"       : "0.8.6",
   "keywords"      : [],
   "maintainers"   : [{ 
     "name": "Michael Diolosa",

@@ -1,5 +1,5 @@
 /*
-backbone.suggestions.js 0.8.5
+backbone.suggestions.js 0.8.6
 Copyright (c) 2011-2012 Michael Diolosa, <michael.diolosa@gmail.com>
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.8.5';
+  Suggestions.version = '0.8.6';
 
   KEYS = {
     UP: 38,
@@ -203,7 +203,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         if ((_ref3 = this.callbacks.suggesting) != null) {
           _ref3.call(this.view, pagingVector);
         }
-        return this._timeout = setTimeout(this._suggestionMethod(this.el.val(), pagingVector), this.optionstimeout);
+        return this._timeout = setTimeout(this._suggestionMethod(this.el.val(), pagingVector), this.options.timeout);
       }
     };
 
@@ -381,6 +381,10 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     __extends(SuggestionView, Backbone.View);
 
     function SuggestionView() {
+      this._listItemClick = __bind(this._listItemClick, this);
+      this._prevClick = __bind(this._prevClick, this);
+      this._nextClick = __bind(this._nextClick, this);
+      this._moreLoadingClick = __bind(this._moreLoadingClick, this);
       this._moreClick = __bind(this._moreClick, this);
       this._onblur = __bind(this._onblur, this);
       this._onfocus = __bind(this._onfocus, this);
@@ -782,6 +786,14 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     };
 
     SuggestionView.prototype._moreClick = function(vector) {
+      var nextAction, prevAction;
+      console.log('clicked');
+      nextAction = this.filterFind(this._menu, "." + this.options.nextActionCssClass);
+      prevAction = this.filterFind(this._menu, "." + this.options.prevActionCssClass);
+      prevAction.unbind('click', this._prevClick);
+      nextAction.unbind('click', this._nextClick);
+      prevAction.bind('click', this._moreLoadingClick);
+      nextAction.bind('click', this._moreLoadingClick);
       this._donotBlur = true;
       clearTimeout(this._blurTimeout);
       event.preventDefault();
@@ -790,18 +802,46 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       return this._controller.suggest(vector);
     };
 
+    SuggestionView.prototype._moreLoadingClick = function(event) {
+      this._donotBlur = true;
+      clearTimeout(this._blurTimeout);
+      event.preventDefault();
+      this.el.focus();
+      return this._donotBlur = false;
+    };
+
+    SuggestionView.prototype._nextClick = function(event) {
+      console.log('test');
+      return this._moreClick(PAGING_VECTOR.NEXT);
+    };
+
+    SuggestionView.prototype._prevClick = function(event) {
+      return this._moreClick(PAGING_VECTOR.PREV);
+    };
+
+    SuggestionView.prototype._loadingClick = function(event) {
+      return event.preventDefault();
+    };
+
+    SuggestionView.prototype._listItemClick = function(event) {
+      event.preventDefault();
+      return this.select($(event.currentTarget).data('suggestion'));
+    };
+
     /* Renders the template of the menu
     */
 
     SuggestionView.prototype.render = function(state, parameters) {
       var actionsRemoved, container, li, list, nextAction, prevAction, suggestion, suggestions, _i, _j, _len, _len2;
-      var _this = this;
       switch (state) {
         case 'default':
           this._menu.empty();
           return this._menu.append(this.templates["default"]());
         case 'loading':
-          if ((parameters != null) && (parameters.pagingVector === PAGING_VECTOR.NEXT || parameters.pagingVector === PAGING_VECTOR.PREV)) {} else {
+          if ((parameters != null) && (parameters.pagingVector === PAGING_VECTOR.NEXT || parameters.pagingVector === PAGING_VECTOR.PREV)) {
+            this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemClick);
+            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemLoadingClick);
+          } else {
             this._menu.empty();
             return this._menu.append(this.templates.loading());
           }
@@ -822,6 +862,10 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
             nextAction = this.filterFind(this._menu, "." + this.options.nextActionCssClass);
             prevAction = this.filterFind(this._menu, "." + this.options.prevActionCssClass);
             actionsRemoved = 0;
+            prevAction.unbind('click', this._moreLoadingClick);
+            nextAction.unbind('click', this._moreLoadingClick);
+            prevAction.bind('click', this._prevClick);
+            nextAction.bind('click', this._nextClick);
             if (!(this._controller.get_current_page() > 1)) {
               prevAction.css('display', 'none');
               actionsRemoved++;
@@ -840,10 +884,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
               this.filterFind(this._menu, "." + this.options.pagingPanelCssClass).css('display', 'block');
             }
             this.filterFind(this._menu, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
-            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).click(function(event) {
-              event.preventDefault();
-              return _this.select($(event.currentTarget).data('suggestion'));
-            });
+            this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemClick);
+            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemLoadingClick);
           } else {
             this._menu.empty();
             list = $(this.templates.loadedList({
@@ -865,12 +907,10 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
             this._menu.append(list);
             nextAction = this.filterFind(list, "." + this.options.nextActionCssClass);
             prevAction = this.filterFind(list, "." + this.options.prevActionCssClass);
-            prevAction.click(function(event) {
-              return _this._moreClick(PAGING_VECTOR.PREV);
-            });
-            nextAction.click(function(event) {
-              return _this._moreClick(PAGING_VECTOR.NEXT);
-            });
+            prevAction.unbind('click', this._moreLoadingClick);
+            nextAction.unbind('click', this._moreLoadingClick);
+            prevAction.bind('click', this._prevClick);
+            nextAction.bind('click', this._nextClick);
             actionsRemoved = 0;
             if (!(this._controller.get_current_page() > 1)) {
               prevAction.css('display', 'none');
@@ -884,10 +924,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
               this.filterFind(list, "." + this.options.pagingPanelCssClass).css('display', 'none');
             }
             this.filterFind(list, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
-            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).click(function(event) {
-              event.preventDefault();
-              return _this.select($(event.currentTarget).data('suggestion'));
-            });
+            this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._loadingClick);
+            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemLoadingClick);
           }
           break;
         case 'empty':

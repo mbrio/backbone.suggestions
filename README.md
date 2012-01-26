@@ -148,8 +148,9 @@ Options
           paging.
         * `show` = The callback that is executed when the menu is shown.
         * `hide` = The callback that is executed when the menu is hidden.
-        * `loading` = The callback that is executed when a remote call is
-          loading.
+        * `loading(pagingVector)` = The callback that is executed when a
+          remote call is loading. The only parameter passed is the paging
+          vector, 1 means next page and -1 means previous page.
         * `error` = The callback that is executed when an AJAX error occurs.
         * `abort` = The callback that is executed when the AJAX error is an
           abort.
