@@ -62,7 +62,7 @@ class SuggestionView extends Backbone.View
       suggesting: => @_suggesting()
       suggested: (cached, pagingVector) => @_suggested(cached, pagingVector)
       error: (jqXHR, textStatus, errorThrown) => @_error(jqXHR, textStatus, errorThrown)
-      loading: => @_loading()
+      loading: (pagingVector) => @_loading(pagingVector)
       enabled: => @_enabled()
       disabled: => @_disabled()
 
@@ -114,9 +114,9 @@ class SuggestionView extends Backbone.View
   _suggesting: ->
     @callbacks.suggesting?.call(this)
 
-  _loading: ->
-    @callbacks.loading?.call(this)
-    @render 'loading'
+  _loading: (pagingVector) ->
+    @callbacks.loading?.call(this, pagingVector)
+    @render 'loading', { pagingVector, pagingVector }
         
   ### Callback for when a suggestions is completed ###
   _suggested: (cached, pagingVector) ->
@@ -252,74 +252,120 @@ class SuggestionView extends Backbone.View
     
     obj
   
+  _moreClick: (vector) =>
+    @_donotBlur = true
+    clearTimeout @_blurTimeout
+    event.preventDefault()
+  
+    @el.focus()
+    @_donotBlur = false
+    @_controller.suggest(vector)
+      
   ### Renders the template of the menu ###
-  render: (state, parameters) ->
-    @_menu.empty()
-    
+  render: (state, parameters) ->    
     switch state
-      when 'default' then @_menu.append @templates.default()
-      when 'loading' then @_menu.append @templates.loading()
+      when 'default'
+        @_menu.empty()
+        @_menu.append @templates.default()
+      when 'loading'
+        if parameters? && (parameters.pagingVector == PAGING_VECTOR.NEXT || parameters.pagingVector == PAGING_VECTOR.PREV)
+          
+        else
+          @_menu.empty()
+          @_menu.append @templates.loading()
       when 'loaded'
-        list = $(@templates.loadedList(
-          cssClass: @options.loadedListCssClass
-          pagingPanelCssClass: @options.pagingPanelCssClass
-          prevActionCssClass: @options.prevActionCssClass
-          nextActionCssClass: @options.nextActionCssClass));
-
-        container = @filterFind(list, ".#{@options.loadedListCssClass}")
-
-        suggestions = parameters.cached.get('suggestions')
-        for suggestion in suggestions
-          suggestion.cssClass = @options.listItemCssClass
-          suggestion.actionCssClass = @options.listItemActionCssClass
+        if parameters? && (parameters.pagingVector == PAGING_VECTOR.NEXT || parameters.pagingVector == PAGING_VECTOR.PREV)
+          container = @filterFind(@_menu, ".#{@options.loadedListCssClass}")
+          
+          suggestions = parameters.cached.get('suggestions')
+          container.empty();
+          for suggestion in suggestions
+            suggestion.cssClass = @options.listItemCssClass
+            suggestion.actionCssClass = @options.listItemActionCssClass
         
-          li = $(@templates.loadedItem(suggestion))
-          @filterFind(li, ".#{@options.listItemActionCssClass}").data('suggestion', suggestion)            
-          container.append(li)
-      
-        @_menu.append list
-      
-        nextAction = @filterFind(list, ".#{@options.nextActionCssClass}")
-        prevAction = @filterFind(list, ".#{@options.prevActionCssClass}")
-        actionsRemoved = 0
+            li = $(@templates.loadedItem(suggestion))
+            @filterFind(li, ".#{@options.listItemActionCssClass}").data('suggestion', suggestion)
+            container.append(li)
+            
+          nextAction = @filterFind(@_menu, ".#{@options.nextActionCssClass}")
+          prevAction = @filterFind(@_menu, ".#{@options.prevActionCssClass}")
+          
+          actionsRemoved = 0
+
+          unless @_controller.get_current_page() > 1
+            prevAction.css 'display', 'none'
+            actionsRemoved++
+          else
+            prevAction.css 'display', 'block'
+
+          unless parameters.cached.get('hasMore') == true
+            nextAction.css 'display', 'none'
+            actionsRemoved++
+          else
+            nextAction.css 'display', 'block'
+          
+          if actionsRemoved == 2 or @options.paging == false
+            @filterFind(@_menu, ".#{@options.pagingPanelCssClass}").css('display', 'none')
+          else
+            @filterFind(@_menu, ".#{@options.pagingPanelCssClass}").css('display', 'block')
+            
+          @filterFind(@_menu, ".#{@options.listItemCssClass}:first-child").addClass('selected')
+          
+          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").click (event) =>
+            event.preventDefault()
+            @select $(event.currentTarget).data('suggestion')
+        else
+          @_menu.empty()
+          list = $(@templates.loadedList(
+            cssClass: @options.loadedListCssClass
+            pagingPanelCssClass: @options.pagingPanelCssClass
+            prevActionCssClass: @options.prevActionCssClass
+            nextActionCssClass: @options.nextActionCssClass));
+
+          container = @filterFind(list, ".#{@options.loadedListCssClass}")
+
+          suggestions = parameters.cached.get('suggestions')
+          for suggestion in suggestions
+            suggestion.cssClass = @options.listItemCssClass
+            suggestion.actionCssClass = @options.listItemActionCssClass
         
-        if @_controller.get_current_page() > 1
+            li = $(@templates.loadedItem(suggestion))
+            @filterFind(li, ".#{@options.listItemActionCssClass}").data('suggestion', suggestion)            
+            container.append(li)
+      
+          @_menu.append list
+      
+          nextAction = @filterFind(list, ".#{@options.nextActionCssClass}")
+          prevAction = @filterFind(list, ".#{@options.prevActionCssClass}")
+        
           prevAction.click (event) =>
-            @_donotBlur = true
-            clearTimeout @_blurTimeout
-            event.preventDefault()
+            @_moreClick PAGING_VECTOR.PREV
             
-            @el.focus()
-            @_donotBlur = false
-            @_controller.suggest(PAGING_VECTOR.PREV)
-                      
-        else
-          prevAction.remove()
-          actionsRemoved++
-
-        if parameters.cached.get('hasMore') == true
           nextAction.click (event) =>
-            @_donotBlur = true
-            clearTimeout @_blurTimeout
-            event.preventDefault()
+            @_moreClick PAGING_VECTOR.NEXT
             
-            @el.focus()
-            @_donotBlur = false
-            @_controller.suggest(PAGING_VECTOR.NEXT)
+          actionsRemoved = 0
+
+          unless @_controller.get_current_page() > 1
+            prevAction.css 'display', 'none'
+            actionsRemoved++
+
+          unless parameters.cached.get('hasMore') == true
+            nextAction.css 'display', 'none'
+            actionsRemoved++
           
-        else
-          nextAction.remove()
-          actionsRemoved++
-          
-        @filterFind(list, ".#{@options.pagingPanelCssClass}").remove() if actionsRemoved == 2 or @options.paging == false
+          @filterFind(list, ".#{@options.pagingPanelCssClass}").css('display', 'none') if actionsRemoved == 2 or @options.paging == false
        
       
-        @filterFind(list, ".#{@options.listItemCssClass}:first-child").addClass('selected')
-        @filterFind(@_menu, ".#{@options.listItemActionCssClass}").click (event) =>
-          event.preventDefault()
-        
-          @select $(event.currentTarget).data('suggestion')
+          @filterFind(list, ".#{@options.listItemCssClass}:first-child").addClass('selected')
+          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").click (event) =>
+            event.preventDefault()
+            @select $(event.currentTarget).data('suggestion')
           
-      when 'empty' then @_menu.append @templates.empty()
-      when 'error' then @_menu.append @templates.error()
+      when 'empty'
+        @_menu.empty()
+        @_menu.append @templates.empty()
+      when 'error' 
+        @_menu.empty()
+        @_menu.append @templates.error()
       else @render 'default'

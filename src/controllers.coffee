@@ -81,7 +81,7 @@ class SuggestionController
       @_currentPage = 1 if @_currentPage < 1
       
       @callbacks.suggesting?.call(@view, pagingVector)
-      @_timeout = setTimeout @_suggestionMethod(@el.val(), pagingVector), (@options.timeout)
+      @_timeout = setTimeout @_suggestionMethod(@el.val(), pagingVector), (@optionstimeout)
     
   ### Halts any AJAX requests and timeouts ###
   halt: ->
@@ -105,7 +105,7 @@ class SuggestionController
   ### Retrieve remote data and cache it prior to completing suggestion with
       local data ###
   _ajax: (key, pagingVector) ->
-    @callbacks.loading?.call(@view)
+    @callbacks.loading?.call(@view, pagingVector)
 
     ajaxOptions =
       url: key

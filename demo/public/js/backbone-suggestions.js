@@ -1,5 +1,5 @@
 /*
-backbone.suggestions.js 0.8.2
+backbone.suggestions.js 0.8.5
 Copyright (c) 2011-2012 Michael Diolosa, <michael.diolosa@gmail.com>
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.8.2';
+  Suggestions.version = '0.8.5';
 
   KEYS = {
     UP: 38,
@@ -203,7 +203,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         if ((_ref3 = this.callbacks.suggesting) != null) {
           _ref3.call(this.view, pagingVector);
         }
-        return this._timeout = setTimeout(this._suggestionMethod(this.el.val(), pagingVector), this.options.timeout);
+        return this._timeout = setTimeout(this._suggestionMethod(this.el.val(), pagingVector), this.optionstimeout);
       }
     };
 
@@ -252,7 +252,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionController.prototype._ajax = function(key, pagingVector) {
       var ajaxOptions, _ref, _ref2;
       var _this = this;
-      if ((_ref = this.callbacks.loading) != null) _ref.call(this.view);
+      if ((_ref = this.callbacks.loading) != null) {
+        _ref.call(this.view, pagingVector);
+      }
       ajaxOptions = {
         url: key,
         success: function(data) {
@@ -379,6 +381,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     __extends(SuggestionView, Backbone.View);
 
     function SuggestionView() {
+      this._moreClick = __bind(this._moreClick, this);
       this._onblur = __bind(this._onblur, this);
       this._onfocus = __bind(this._onfocus, this);
       this._onkeyup = __bind(this._onkeyup, this);
@@ -423,7 +426,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       selected: null,
       abort: null,
       keyDown: null,
-      keyUp: null
+      keyUp: null,
+      show: null,
+      hide: null
     };
 
     /* Default options
@@ -491,8 +496,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         error: function(jqXHR, textStatus, errorThrown) {
           return _this._error(jqXHR, textStatus, errorThrown);
         },
-        loading: function() {
-          return _this._loading();
+        loading: function(pagingVector) {
+          return _this._loading(pagingVector);
         },
         enabled: function() {
           return _this._enabled();
@@ -571,10 +576,13 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       return (_ref = this.callbacks.suggesting) != null ? _ref.call(this) : void 0;
     };
 
-    SuggestionView.prototype._loading = function() {
+    SuggestionView.prototype._loading = function(pagingVector) {
       var _ref;
-      if ((_ref = this.callbacks.loading) != null) _ref.call(this);
-      return this.render('loading');
+      if ((_ref = this.callbacks.loading) != null) _ref.call(this, pagingVector);
+      return this.render('loading', {
+        pagingVector: pagingVector,
+        pagingVector: pagingVector
+      });
     };
 
     /* Callback for when a suggestions is completed
@@ -723,7 +731,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype.show = function() {
+      var _ref;
       if (this._menuVisible) return;
+      if ((_ref = this.callbacks.show) != null) _ref.call(this);
       clearTimeout(this._blurTimeout);
       this._menuVisible = true;
       this._controller.halt();
@@ -737,7 +747,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     */
 
     SuggestionView.prototype.hide = function() {
+      var _ref;
       if (!this._menuVisible) return;
+      if ((_ref = this.callbacks.hide) != null) _ref.call(this);
       this._previousValue = null;
       this._menuVisible = false;
       this._controller.halt();
@@ -769,76 +781,120 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       return obj;
     };
 
+    SuggestionView.prototype._moreClick = function(vector) {
+      this._donotBlur = true;
+      clearTimeout(this._blurTimeout);
+      event.preventDefault();
+      this.el.focus();
+      this._donotBlur = false;
+      return this._controller.suggest(vector);
+    };
+
     /* Renders the template of the menu
     */
 
     SuggestionView.prototype.render = function(state, parameters) {
-      var actionsRemoved, container, li, list, nextAction, prevAction, suggestion, suggestions, _i, _len;
+      var actionsRemoved, container, li, list, nextAction, prevAction, suggestion, suggestions, _i, _j, _len, _len2;
       var _this = this;
-      this._menu.empty();
       switch (state) {
         case 'default':
+          this._menu.empty();
           return this._menu.append(this.templates["default"]());
         case 'loading':
-          return this._menu.append(this.templates.loading());
+          if ((parameters != null) && (parameters.pagingVector === PAGING_VECTOR.NEXT || parameters.pagingVector === PAGING_VECTOR.PREV)) {} else {
+            this._menu.empty();
+            return this._menu.append(this.templates.loading());
+          }
+          break;
         case 'loaded':
-          list = $(this.templates.loadedList({
-            cssClass: this.options.loadedListCssClass,
-            pagingPanelCssClass: this.options.pagingPanelCssClass,
-            prevActionCssClass: this.options.prevActionCssClass,
-            nextActionCssClass: this.options.nextActionCssClass
-          }));
-          container = this.filterFind(list, "." + this.options.loadedListCssClass);
-          suggestions = parameters.cached.get('suggestions');
-          for (_i = 0, _len = suggestions.length; _i < _len; _i++) {
-            suggestion = suggestions[_i];
-            suggestion.cssClass = this.options.listItemCssClass;
-            suggestion.actionCssClass = this.options.listItemActionCssClass;
-            li = $(this.templates.loadedItem(suggestion));
-            this.filterFind(li, "." + this.options.listItemActionCssClass).data('suggestion', suggestion);
-            container.append(li);
-          }
-          this._menu.append(list);
-          nextAction = this.filterFind(list, "." + this.options.nextActionCssClass);
-          prevAction = this.filterFind(list, "." + this.options.prevActionCssClass);
-          actionsRemoved = 0;
-          if (this._controller.get_current_page() > 1) {
+          if ((parameters != null) && (parameters.pagingVector === PAGING_VECTOR.NEXT || parameters.pagingVector === PAGING_VECTOR.PREV)) {
+            container = this.filterFind(this._menu, "." + this.options.loadedListCssClass);
+            suggestions = parameters.cached.get('suggestions');
+            container.empty();
+            for (_i = 0, _len = suggestions.length; _i < _len; _i++) {
+              suggestion = suggestions[_i];
+              suggestion.cssClass = this.options.listItemCssClass;
+              suggestion.actionCssClass = this.options.listItemActionCssClass;
+              li = $(this.templates.loadedItem(suggestion));
+              this.filterFind(li, "." + this.options.listItemActionCssClass).data('suggestion', suggestion);
+              container.append(li);
+            }
+            nextAction = this.filterFind(this._menu, "." + this.options.nextActionCssClass);
+            prevAction = this.filterFind(this._menu, "." + this.options.prevActionCssClass);
+            actionsRemoved = 0;
+            if (!(this._controller.get_current_page() > 1)) {
+              prevAction.css('display', 'none');
+              actionsRemoved++;
+            } else {
+              prevAction.css('display', 'block');
+            }
+            if (parameters.cached.get('hasMore') !== true) {
+              nextAction.css('display', 'none');
+              actionsRemoved++;
+            } else {
+              nextAction.css('display', 'block');
+            }
+            if (actionsRemoved === 2 || this.options.paging === false) {
+              this.filterFind(this._menu, "." + this.options.pagingPanelCssClass).css('display', 'none');
+            } else {
+              this.filterFind(this._menu, "." + this.options.pagingPanelCssClass).css('display', 'block');
+            }
+            this.filterFind(this._menu, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
+            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).click(function(event) {
+              event.preventDefault();
+              return _this.select($(event.currentTarget).data('suggestion'));
+            });
+          } else {
+            this._menu.empty();
+            list = $(this.templates.loadedList({
+              cssClass: this.options.loadedListCssClass,
+              pagingPanelCssClass: this.options.pagingPanelCssClass,
+              prevActionCssClass: this.options.prevActionCssClass,
+              nextActionCssClass: this.options.nextActionCssClass
+            }));
+            container = this.filterFind(list, "." + this.options.loadedListCssClass);
+            suggestions = parameters.cached.get('suggestions');
+            for (_j = 0, _len2 = suggestions.length; _j < _len2; _j++) {
+              suggestion = suggestions[_j];
+              suggestion.cssClass = this.options.listItemCssClass;
+              suggestion.actionCssClass = this.options.listItemActionCssClass;
+              li = $(this.templates.loadedItem(suggestion));
+              this.filterFind(li, "." + this.options.listItemActionCssClass).data('suggestion', suggestion);
+              container.append(li);
+            }
+            this._menu.append(list);
+            nextAction = this.filterFind(list, "." + this.options.nextActionCssClass);
+            prevAction = this.filterFind(list, "." + this.options.prevActionCssClass);
             prevAction.click(function(event) {
-              _this._donotBlur = true;
-              clearTimeout(_this._blurTimeout);
-              event.preventDefault();
-              _this.el.focus();
-              _this._donotBlur = false;
-              return _this._controller.suggest(PAGING_VECTOR.PREV);
+              return _this._moreClick(PAGING_VECTOR.PREV);
             });
-          } else {
-            prevAction.remove();
-            actionsRemoved++;
-          }
-          if (parameters.cached.get('hasMore') === true) {
             nextAction.click(function(event) {
-              _this._donotBlur = true;
-              clearTimeout(_this._blurTimeout);
-              event.preventDefault();
-              _this.el.focus();
-              _this._donotBlur = false;
-              return _this._controller.suggest(PAGING_VECTOR.NEXT);
+              return _this._moreClick(PAGING_VECTOR.NEXT);
             });
-          } else {
-            nextAction.remove();
-            actionsRemoved++;
+            actionsRemoved = 0;
+            if (!(this._controller.get_current_page() > 1)) {
+              prevAction.css('display', 'none');
+              actionsRemoved++;
+            }
+            if (parameters.cached.get('hasMore') !== true) {
+              nextAction.css('display', 'none');
+              actionsRemoved++;
+            }
+            if (actionsRemoved === 2 || this.options.paging === false) {
+              this.filterFind(list, "." + this.options.pagingPanelCssClass).css('display', 'none');
+            }
+            this.filterFind(list, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
+            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).click(function(event) {
+              event.preventDefault();
+              return _this.select($(event.currentTarget).data('suggestion'));
+            });
           }
-          if (actionsRemoved === 2 || this.options.paging === false) {
-            this.filterFind(list, "." + this.options.pagingPanelCssClass).remove();
-          }
-          this.filterFind(list, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
-          return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).click(function(event) {
-            event.preventDefault();
-            return _this.select($(event.currentTarget).data('suggestion'));
-          });
+          break;
         case 'empty':
+          this._menu.empty();
           return this._menu.append(this.templates.empty());
         case 'error':
+          this._menu.empty();
           return this._menu.append(this.templates.error());
         default:
           return this.render('default');
