@@ -259,6 +259,8 @@ class SuggestionView extends Backbone.View
     nextAction.unbind 'click', @_nextClick
     prevAction.bind 'click', @_moreLoadingClick
     nextAction.bind 'click', @_moreLoadingClick
+    @filterFind(@_menu, ".#{@options.listItemActionCssClass}").unbind 'click', @_listItemClick
+    @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_listItemLoadingClick
     
     @_donotBlur = true
     clearTimeout @_blurTimeout
@@ -297,8 +299,7 @@ class SuggestionView extends Backbone.View
         @_menu.append @templates.default()
       when 'loading'
         if parameters? && (parameters.pagingVector == PAGING_VECTOR.NEXT || parameters.pagingVector == PAGING_VECTOR.PREV)
-          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").unbind 'click', @_listItemClick
-          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_listItemLoadingClick
+
         else
           @_menu.empty()
           @_menu.append @templates.loading()
@@ -344,9 +345,10 @@ class SuggestionView extends Backbone.View
             @filterFind(@_menu, ".#{@options.pagingPanelCssClass}").css('display', 'block')
             
           @filterFind(@_menu, ".#{@options.listItemCssClass}:first-child").addClass('selected')
+        
           
-          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_listItemClick
           @filterFind(@_menu, ".#{@options.listItemActionCssClass}").unbind 'click', @_listItemLoadingClick
+          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_listItemClick
         else
           @_menu.empty()
           list = $(@templates.loadedList(
@@ -391,8 +393,8 @@ class SuggestionView extends Backbone.View
       
           @filterFind(list, ".#{@options.listItemCssClass}:first-child").addClass('selected')
           
-          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_loadingClick
           @filterFind(@_menu, ".#{@options.listItemActionCssClass}").unbind 'click', @_listItemLoadingClick
+          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_listItemClick
           
       when 'empty'
         @_menu.empty()

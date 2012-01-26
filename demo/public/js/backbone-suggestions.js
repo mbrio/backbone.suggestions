@@ -787,13 +787,14 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype._moreClick = function(vector) {
       var nextAction, prevAction;
-      console.log('clicked');
       nextAction = this.filterFind(this._menu, "." + this.options.nextActionCssClass);
       prevAction = this.filterFind(this._menu, "." + this.options.prevActionCssClass);
       prevAction.unbind('click', this._prevClick);
       nextAction.unbind('click', this._nextClick);
       prevAction.bind('click', this._moreLoadingClick);
       nextAction.bind('click', this._moreLoadingClick);
+      this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemClick);
+      this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemLoadingClick);
       this._donotBlur = true;
       clearTimeout(this._blurTimeout);
       event.preventDefault();
@@ -811,7 +812,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     };
 
     SuggestionView.prototype._nextClick = function(event) {
-      console.log('test');
       return this._moreClick(PAGING_VECTOR.NEXT);
     };
 
@@ -825,6 +825,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype._listItemClick = function(event) {
       event.preventDefault();
+      console.log('test');
       return this.select($(event.currentTarget).data('suggestion'));
     };
 
@@ -838,10 +839,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           this._menu.empty();
           return this._menu.append(this.templates["default"]());
         case 'loading':
-          if ((parameters != null) && (parameters.pagingVector === PAGING_VECTOR.NEXT || parameters.pagingVector === PAGING_VECTOR.PREV)) {
-            this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemClick);
-            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemLoadingClick);
-          } else {
+          if ((parameters != null) && (parameters.pagingVector === PAGING_VECTOR.NEXT || parameters.pagingVector === PAGING_VECTOR.PREV)) {} else {
             this._menu.empty();
             return this._menu.append(this.templates.loading());
           }
@@ -884,8 +882,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
               this.filterFind(this._menu, "." + this.options.pagingPanelCssClass).css('display', 'block');
             }
             this.filterFind(this._menu, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
-            this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemClick);
-            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemLoadingClick);
+            this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemLoadingClick);
+            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemClick);
           } else {
             this._menu.empty();
             list = $(this.templates.loadedList({
@@ -924,8 +922,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
               this.filterFind(list, "." + this.options.pagingPanelCssClass).css('display', 'none');
             }
             this.filterFind(list, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
-            this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._loadingClick);
-            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemLoadingClick);
+            this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemLoadingClick);
+            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemClick);
           }
           break;
         case 'empty':
