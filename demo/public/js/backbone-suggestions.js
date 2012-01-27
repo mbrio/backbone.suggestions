@@ -1,5 +1,5 @@
 /*
-backbone.suggestions.js 0.8.6
+backbone.suggestions.js 0.8.7
 Copyright (c) 2011-2012 Michael Diolosa, <michael.diolosa@gmail.com>
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.8.6';
+  Suggestions.version = '0.8.7';
 
   KEYS = {
     UP: 38,
@@ -203,7 +203,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         if ((_ref3 = this.callbacks.suggesting) != null) {
           _ref3.call(this.view, pagingVector);
         }
-        return this._timeout = setTimeout(this._suggestionMethod(this.el.val(), pagingVector), this.options.timeout);
+        if ((pagingVector != null) && pagingVector !== 0) {
+          return this._suggestionMethod(this.el.val(), pagingVector)();
+        } else {
+          return this._timeout = setTimeout(this._suggestionMethod(this.el.val(), pagingVector), this.options.timeout);
+        }
       }
     };
 
@@ -376,7 +380,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
   */
 
   SuggestionView = (function() {
-    var _blurTimeout, _donotBlur;
+    var _blurTimeout, _currentState, _donotBlur, _previousState;
 
     __extends(SuggestionView, Backbone.View);
 
@@ -410,6 +414,10 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     _donotBlur = false;
 
+    _previousState = null;
+
+    _currentState = null;
+
     /* Templates that define the layout of the menu for each of it's states
     */
 
@@ -441,6 +449,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionView.prototype.options = {
       zIndex: 500,
       cssClass: 'suggestions-menu',
+      loadingCssClass: 'suggestions-loading',
       pagingPanelCssClass: 'suggestions-paging-panel',
       nextActionCssClass: 'suggestions-next-action',
       prevActionCssClass: 'suggestions-prev-action',
@@ -636,7 +645,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       switch (event.keyCode) {
         case KEYS.UP:
           if (!this._menuVisible) return;
-          event.preventDefault();
+          if (event.preventDefault) {
+            event.preventDefault();
+          } else {
+            event.returnValue = false;
+          }
           selected = this.filterFind(this._menu, "." + this.options.listItemCssClass + "." + this.options.selectedCssClass);
           if ((selected != null ? selected.size() : void 0) > 0 && (selected != null ? selected.prev().length : void 0) > 0) {
             selected.removeClass(this.options.selectedCssClass);
@@ -645,7 +658,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           break;
         case KEYS.DOWN:
           if (!this._menuVisible) return;
-          event.preventDefault();
+          if (event.preventDefault) {
+            event.preventDefault();
+          } else {
+            event.returnValue = false;
+          }
           selected = this.filterFind(this._menu, "." + this.options.listItemCssClass + "." + this.options.selectedCssClass);
           if ((selected != null ? selected.size() : void 0) > 0 && (selected != null ? selected.next().length : void 0) > 0) {
             selected.removeClass(this.options.selectedCssClass);
@@ -654,7 +671,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           break;
         case KEYS.ENTER:
           if (!this._menuVisible) return;
-          event.preventDefault();
+          if (event.preventDefault) {
+            event.preventDefault();
+          } else {
+            event.returnValue = false;
+          }
           selected = this.filterFind(this._menu, "." + this.options.listItemCssClass + "." + this.options.selectedCssClass + " a");
           if ((selected != null ? selected.get(0) : void 0) != null) {
             selected.click();
@@ -665,7 +686,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           if (!(this._menuVisible && this.options.enableForceClose === true)) {
             return;
           }
-          event.preventDefault();
+          if (event.preventDefault) {
+            event.preventDefault();
+          } else {
+            event.returnValue = false;
+          }
           this._forceClosed = true;
           return this.hide();
       }
@@ -685,7 +710,13 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         case KEYS.DOWN:
         case KEYS.ENTER:
         case KEYS.ESC:
-          if (this._menuVisible) return event.preventDefault();
+          if (this._menuVisible) {
+            if (event.preventDefault) {
+              return event.preventDefault();
+            } else {
+              return event.returnValue = false;
+            }
+          }
           break;
         default:
           if (this._menuVisible && this._previousValue !== this.el.val()) {
@@ -785,7 +816,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       return obj;
     };
 
-    SuggestionView.prototype._moreClick = function(vector) {
+    SuggestionView.prototype._moreClick = function(event, vector) {
       var nextAction, prevAction;
       nextAction = this.filterFind(this._menu, "." + this.options.nextActionCssClass);
       prevAction = this.filterFind(this._menu, "." + this.options.prevActionCssClass);
@@ -797,7 +828,11 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemLoadingClick);
       this._donotBlur = true;
       clearTimeout(this._blurTimeout);
-      event.preventDefault();
+      if (event.preventDefault) {
+        event.preventDefault();
+      } else {
+        event.returnValue = false;
+      }
       this.el.focus();
       this._donotBlur = false;
       return this._controller.suggest(vector);
@@ -806,135 +841,137 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionView.prototype._moreLoadingClick = function(event) {
       this._donotBlur = true;
       clearTimeout(this._blurTimeout);
-      event.preventDefault();
+      if (event.preventDefault) {
+        event.preventDefault();
+      } else {
+        event.returnValue = false;
+      }
       this.el.focus();
       return this._donotBlur = false;
     };
 
     SuggestionView.prototype._nextClick = function(event) {
-      return this._moreClick(PAGING_VECTOR.NEXT);
+      return this._moreClick(event, PAGING_VECTOR.NEXT);
     };
 
     SuggestionView.prototype._prevClick = function(event) {
-      return this._moreClick(PAGING_VECTOR.PREV);
+      return this._moreClick(event, PAGING_VECTOR.PREV);
     };
 
     SuggestionView.prototype._loadingClick = function(event) {
-      return event.preventDefault();
+      if (event.preventDefault) {
+        return event.preventDefault();
+      } else {
+        return event.returnValue = false;
+      }
     };
 
     SuggestionView.prototype._listItemClick = function(event) {
-      event.preventDefault();
-      console.log('test');
+      if (event.preventDefault) {
+        event.preventDefault();
+      } else {
+        event.returnValue = false;
+      }
       return this.select($(event.currentTarget).data('suggestion'));
+    };
+
+    SuggestionView.prototype._isPaging = function(parameters) {
+      return (parameters != null) && (parameters.pagingVector === PAGING_VECTOR.NEXT || parameters.pagingVector === PAGING_VECTOR.PREV);
+    };
+
+    SuggestionView.prototype.states = {
+      'default': function(parameters) {
+        this._menu.removeClass(this.options.loadingCssClass);
+        this._menu.empty();
+        return this._menu.append(this.templates["default"]());
+      },
+      empty: function(parameters) {
+        this._menu.removeClass(this.options.loadingCssClass);
+        this._menu.empty();
+        return this._menu.append(this.templates.empty());
+      },
+      error: function(parameters) {
+        this._menu.removeClass(this.options.loadingCssClass);
+        this._menu.empty();
+        return this._menu.append(this.templates.error());
+      },
+      loading: function(parameters) {
+        this._menu.addClass(this.options.loadingCssClass);
+        if (!this._isPaging(parameters)) {
+          this._menu.empty();
+          return this._menu.append(this.templates.loading());
+        }
+      },
+      loaded: function(parameters) {
+        var list;
+        this._menu.removeClass(this.options.loadingCssClass);
+        if (this._isPaging(parameters)) {
+          return this.states._loaded.call(this, parameters);
+        } else {
+          this._menu.empty();
+          list = $(this.templates.loadedList({
+            cssClass: this.options.loadedListCssClass,
+            pagingPanelCssClass: this.options.pagingPanelCssClass,
+            prevActionCssClass: this.options.prevActionCssClass,
+            nextActionCssClass: this.options.nextActionCssClass
+          }));
+          this._menu.append(list);
+          return this.states._loaded.call(this, parameters);
+        }
+      },
+      _loaded: function(parameters) {
+        var actionsRemoved, container, li, nextAction, prevAction, suggestion, suggestions, _i, _len;
+        container = this.filterFind(this._menu, "." + this.options.loadedListCssClass);
+        suggestions = parameters.cached.get('suggestions');
+        container.empty();
+        for (_i = 0, _len = suggestions.length; _i < _len; _i++) {
+          suggestion = suggestions[_i];
+          suggestion.cssClass = this.options.listItemCssClass;
+          suggestion.actionCssClass = this.options.listItemActionCssClass;
+          li = $(this.templates.loadedItem(suggestion));
+          this.filterFind(li, "." + this.options.listItemActionCssClass).data('suggestion', suggestion);
+          container.append(li);
+        }
+        nextAction = this.filterFind(this._menu, "." + this.options.nextActionCssClass);
+        prevAction = this.filterFind(this._menu, "." + this.options.prevActionCssClass);
+        prevAction.unbind('click', this._moreLoadingClick);
+        nextAction.unbind('click', this._moreLoadingClick);
+        prevAction.bind('click', this._prevClick);
+        nextAction.bind('click', this._nextClick);
+        actionsRemoved = 0;
+        if (!(this._controller.get_current_page() > 1)) {
+          prevAction.css('display', 'none');
+          actionsRemoved++;
+        } else {
+          prevAction.css('display', 'block');
+        }
+        if (parameters.cached.get('hasMore') !== true) {
+          nextAction.css('display', 'none');
+          actionsRemoved++;
+        } else {
+          nextAction.css('display', 'block');
+        }
+        if (actionsRemoved === 2 || this.options.paging === false) {
+          this.filterFind(this._menu, "." + this.options.pagingPanelCssClass).css('display', 'none');
+        } else {
+          this.filterFind(this._menu, "." + this.options.pagingPanelCssClass).css('display', 'block');
+        }
+        this.filterFind(this._menu, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
+        this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemLoadingClick);
+        return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemClick);
+      }
     };
 
     /* Renders the template of the menu
     */
 
     SuggestionView.prototype.render = function(state, parameters) {
-      var actionsRemoved, container, li, list, nextAction, prevAction, suggestion, suggestions, _i, _j, _len, _len2;
-      switch (state) {
-        case 'default':
-          this._menu.empty();
-          return this._menu.append(this.templates["default"]());
-        case 'loading':
-          if ((parameters != null) && (parameters.pagingVector === PAGING_VECTOR.NEXT || parameters.pagingVector === PAGING_VECTOR.PREV)) {} else {
-            this._menu.empty();
-            return this._menu.append(this.templates.loading());
-          }
-          break;
-        case 'loaded':
-          if ((parameters != null) && (parameters.pagingVector === PAGING_VECTOR.NEXT || parameters.pagingVector === PAGING_VECTOR.PREV)) {
-            container = this.filterFind(this._menu, "." + this.options.loadedListCssClass);
-            suggestions = parameters.cached.get('suggestions');
-            container.empty();
-            for (_i = 0, _len = suggestions.length; _i < _len; _i++) {
-              suggestion = suggestions[_i];
-              suggestion.cssClass = this.options.listItemCssClass;
-              suggestion.actionCssClass = this.options.listItemActionCssClass;
-              li = $(this.templates.loadedItem(suggestion));
-              this.filterFind(li, "." + this.options.listItemActionCssClass).data('suggestion', suggestion);
-              container.append(li);
-            }
-            nextAction = this.filterFind(this._menu, "." + this.options.nextActionCssClass);
-            prevAction = this.filterFind(this._menu, "." + this.options.prevActionCssClass);
-            actionsRemoved = 0;
-            prevAction.unbind('click', this._moreLoadingClick);
-            nextAction.unbind('click', this._moreLoadingClick);
-            prevAction.bind('click', this._prevClick);
-            nextAction.bind('click', this._nextClick);
-            if (!(this._controller.get_current_page() > 1)) {
-              prevAction.css('display', 'none');
-              actionsRemoved++;
-            } else {
-              prevAction.css('display', 'block');
-            }
-            if (parameters.cached.get('hasMore') !== true) {
-              nextAction.css('display', 'none');
-              actionsRemoved++;
-            } else {
-              nextAction.css('display', 'block');
-            }
-            if (actionsRemoved === 2 || this.options.paging === false) {
-              this.filterFind(this._menu, "." + this.options.pagingPanelCssClass).css('display', 'none');
-            } else {
-              this.filterFind(this._menu, "." + this.options.pagingPanelCssClass).css('display', 'block');
-            }
-            this.filterFind(this._menu, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
-            this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemLoadingClick);
-            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemClick);
-          } else {
-            this._menu.empty();
-            list = $(this.templates.loadedList({
-              cssClass: this.options.loadedListCssClass,
-              pagingPanelCssClass: this.options.pagingPanelCssClass,
-              prevActionCssClass: this.options.prevActionCssClass,
-              nextActionCssClass: this.options.nextActionCssClass
-            }));
-            container = this.filterFind(list, "." + this.options.loadedListCssClass);
-            suggestions = parameters.cached.get('suggestions');
-            for (_j = 0, _len2 = suggestions.length; _j < _len2; _j++) {
-              suggestion = suggestions[_j];
-              suggestion.cssClass = this.options.listItemCssClass;
-              suggestion.actionCssClass = this.options.listItemActionCssClass;
-              li = $(this.templates.loadedItem(suggestion));
-              this.filterFind(li, "." + this.options.listItemActionCssClass).data('suggestion', suggestion);
-              container.append(li);
-            }
-            this._menu.append(list);
-            nextAction = this.filterFind(list, "." + this.options.nextActionCssClass);
-            prevAction = this.filterFind(list, "." + this.options.prevActionCssClass);
-            prevAction.unbind('click', this._moreLoadingClick);
-            nextAction.unbind('click', this._moreLoadingClick);
-            prevAction.bind('click', this._prevClick);
-            nextAction.bind('click', this._nextClick);
-            actionsRemoved = 0;
-            if (!(this._controller.get_current_page() > 1)) {
-              prevAction.css('display', 'none');
-              actionsRemoved++;
-            }
-            if (parameters.cached.get('hasMore') !== true) {
-              nextAction.css('display', 'none');
-              actionsRemoved++;
-            }
-            if (actionsRemoved === 2 || this.options.paging === false) {
-              this.filterFind(list, "." + this.options.pagingPanelCssClass).css('display', 'none');
-            }
-            this.filterFind(list, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
-            this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemLoadingClick);
-            return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemClick);
-          }
-          break;
-        case 'empty':
-          this._menu.empty();
-          return this._menu.append(this.templates.empty());
-        case 'error':
-          this._menu.empty();
-          return this._menu.append(this.templates.error());
-        default:
-          return this.render('default');
-      }
+      var selectedState;
+      this._previousState = this._currentState;
+      selectedState = 'default';
+      if (this.states.hasOwnProperty(state)) selectedState = state;
+      this._currentState = state;
+      return this.states[selectedState].call(this, parameters);
     };
 
     return SuggestionView;

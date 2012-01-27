@@ -8,6 +8,8 @@ class SuggestionView extends Backbone.View
   _previousValue: null
   _blurTimeout = null
   _donotBlur = false
+  _previousState = null
+  _currentState = null
   
   ### Templates that define the layout of the menu for each of it's states ###
   templates:
@@ -32,6 +34,7 @@ class SuggestionView extends Backbone.View
   options:
     zIndex: 500
     cssClass: 'suggestions-menu'
+    loadingCssClass: 'suggestions-loading'
     pagingPanelCssClass: 'suggestions-paging-panel'
     nextActionCssClass: 'suggestions-next-action'
     prevActionCssClass: 'suggestions-prev-action'
@@ -142,7 +145,7 @@ class SuggestionView extends Backbone.View
     switch event.keyCode
       when KEYS.UP
         return unless @_menuVisible
-        event.preventDefault()
+        if event.preventDefault then event.preventDefault() else event.returnValue = false
         
         selected = @filterFind @_menu, ".#{@options.listItemCssClass}.#{@options.selectedCssClass}"
 
@@ -152,7 +155,7 @@ class SuggestionView extends Backbone.View
 
       when KEYS.DOWN            
         return unless @_menuVisible
-        event.preventDefault()
+        if event.preventDefault then event.preventDefault() else event.returnValue = false
         
         selected = @filterFind @_menu, ".#{@options.listItemCssClass}.#{@options.selectedCssClass}"
         
@@ -162,7 +165,7 @@ class SuggestionView extends Backbone.View
 
       when KEYS.ENTER
         return unless @_menuVisible
-        event.preventDefault()
+        if event.preventDefault then event.preventDefault() else event.returnValue = false
         
         selected = @filterFind @_menu, ".#{@options.listItemCssClass}.#{@options.selectedCssClass} a"
 
@@ -172,7 +175,7 @@ class SuggestionView extends Backbone.View
 
       when KEYS.ESC
         return unless @_menuVisible && @options.enableForceClose == true
-        event.preventDefault()
+        if event.preventDefault then event.preventDefault() else event.returnValue = false
         
         @_forceClosed = true
         @hide()
@@ -185,7 +188,8 @@ class SuggestionView extends Backbone.View
         
     switch event.keyCode
       when KEYS.UP, KEYS.DOWN, KEYS.ENTER, KEYS.ESC
-        if @_menuVisible then event.preventDefault()
+        if @_menuVisible
+          if event.preventDefault then event.preventDefault() else event.returnValue = false
       else
         if @_menuVisible and @_previousValue isnt @el.val()
           @_controller.suggest()
@@ -252,7 +256,7 @@ class SuggestionView extends Backbone.View
     
     obj
   
-  _moreClick: (vector) =>
+  _moreClick: (event, vector) =>
     nextAction = @filterFind(@_menu, ".#{@options.nextActionCssClass}")
     prevAction = @filterFind(@_menu, ".#{@options.prevActionCssClass}")
     prevAction.unbind 'click', @_prevClick
@@ -264,142 +268,125 @@ class SuggestionView extends Backbone.View
     
     @_donotBlur = true
     clearTimeout @_blurTimeout
-    event.preventDefault()
+    if event.preventDefault then event.preventDefault() else event.returnValue = false
   
     @el.focus()
     @_donotBlur = false
     @_controller.suggest(vector)
     
-  _moreLoadingClick: (event) =>    
+  _moreLoadingClick: (event) =>
     @_donotBlur = true
     clearTimeout @_blurTimeout
-    event.preventDefault()
+    if event.preventDefault then event.preventDefault() else event.returnValue = false
   
     @el.focus()
     @_donotBlur = false
     
   _nextClick: (event) =>
-      @_moreClick PAGING_VECTOR.NEXT
+      @_moreClick event, PAGING_VECTOR.NEXT
       
   _prevClick: (event) =>
-      @_moreClick PAGING_VECTOR.PREV
+      @_moreClick event, PAGING_VECTOR.PREV
     
   _loadingClick: (event) ->
-      event.preventDefault()
+      if event.preventDefault then event.preventDefault() else event.returnValue = false
       
   _listItemClick: (event) =>
-      event.preventDefault()
+      if event.preventDefault then event.preventDefault() else event.returnValue = false
       @select $(event.currentTarget).data('suggestion')
+  
+  _isPaging: (parameters) ->
+    parameters? && (parameters.pagingVector == PAGING_VECTOR.NEXT || parameters.pagingVector == PAGING_VECTOR.PREV)
+    
+  states:
+    'default': (parameters) ->
+      @_menu.removeClass(@options.loadingCssClass)
+      @_menu.empty()
+      @_menu.append @templates.default()
+      
+    empty: (parameters) ->
+      @_menu.removeClass(@options.loadingCssClass)
+      @_menu.empty()
+      @_menu.append @templates.empty()
+      
+    error: (parameters) ->
+      @_menu.removeClass(@options.loadingCssClass)
+      @_menu.empty()
+      @_menu.append @templates.error()
+      
+    loading: (parameters) ->
+      @_menu.addClass(@options.loadingCssClass)
+      unless @_isPaging(parameters)
+        @_menu.empty()
+        @_menu.append @templates.loading()
+      
+    loaded: (parameters) ->
+      @_menu.removeClass(@options.loadingCssClass)
+      if @_isPaging(parameters)
+        @states._loaded.call(this, parameters)
+      else
+        @_menu.empty()
+        list = $(@templates.loadedList(
+          cssClass: @options.loadedListCssClass
+          pagingPanelCssClass: @options.pagingPanelCssClass
+          prevActionCssClass: @options.prevActionCssClass
+          nextActionCssClass: @options.nextActionCssClass));
+
+        @_menu.append list
+        
+        @states._loaded.call(this, parameters)
+        
+    _loaded: (parameters) ->
+      container = @filterFind(@_menu, ".#{@options.loadedListCssClass}")
+
+      suggestions = parameters.cached.get('suggestions')
+      container.empty();
+      for suggestion in suggestions
+        suggestion.cssClass = @options.listItemCssClass
+        suggestion.actionCssClass = @options.listItemActionCssClass
+    
+        li = $(@templates.loadedItem(suggestion))
+        @filterFind(li, ".#{@options.listItemActionCssClass}").data('suggestion', suggestion)            
+        container.append(li)
+        
+      nextAction = @filterFind(@_menu, ".#{@options.nextActionCssClass}")
+      prevAction = @filterFind(@_menu, ".#{@options.prevActionCssClass}")
+
+      prevAction.unbind 'click', @_moreLoadingClick
+      nextAction.unbind 'click', @_moreLoadingClick
+      prevAction.bind 'click', @_prevClick
+      nextAction.bind 'click', @_nextClick
+
+      actionsRemoved = 0
+
+      unless @_controller.get_current_page() > 1
+        prevAction.css 'display', 'none'
+        actionsRemoved++
+      else
+        prevAction.css 'display', 'block'
+
+      unless parameters.cached.get('hasMore') == true
+        nextAction.css 'display', 'none'
+        actionsRemoved++
+      else
+        nextAction.css 'display', 'block'
+
+      if actionsRemoved == 2 or @options.paging == false
+        @filterFind(@_menu, ".#{@options.pagingPanelCssClass}").css('display', 'none')
+      else
+        @filterFind(@_menu, ".#{@options.pagingPanelCssClass}").css('display', 'block')
+
+      @filterFind(@_menu, ".#{@options.listItemCssClass}:first-child").addClass('selected')
+
+      @filterFind(@_menu, ".#{@options.listItemActionCssClass}").unbind 'click', @_listItemLoadingClick
+      @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_listItemClick
+      
       
   ### Renders the template of the menu ###
-  render: (state, parameters) ->    
-    switch state
-      when 'default'
-        @_menu.empty()
-        @_menu.append @templates.default()
-      when 'loading'
-        if parameters? && (parameters.pagingVector == PAGING_VECTOR.NEXT || parameters.pagingVector == PAGING_VECTOR.PREV)
+  render: (state, parameters) ->
+    @_previousState = @_currentState
+    selectedState = 'default'
+    selectedState = state if @states.hasOwnProperty state
+    @_currentState = state
 
-        else
-          @_menu.empty()
-          @_menu.append @templates.loading()
-      when 'loaded'
-        if parameters? && (parameters.pagingVector == PAGING_VECTOR.NEXT || parameters.pagingVector == PAGING_VECTOR.PREV)
-          container = @filterFind(@_menu, ".#{@options.loadedListCssClass}")
-          
-          suggestions = parameters.cached.get('suggestions')
-          container.empty();
-          for suggestion in suggestions
-            suggestion.cssClass = @options.listItemCssClass
-            suggestion.actionCssClass = @options.listItemActionCssClass
-        
-            li = $(@templates.loadedItem(suggestion))
-            @filterFind(li, ".#{@options.listItemActionCssClass}").data('suggestion', suggestion)
-            container.append(li)
-            
-          nextAction = @filterFind(@_menu, ".#{@options.nextActionCssClass}")
-          prevAction = @filterFind(@_menu, ".#{@options.prevActionCssClass}")
-          
-          actionsRemoved = 0
-
-          prevAction.unbind 'click', @_moreLoadingClick
-          nextAction.unbind 'click', @_moreLoadingClick
-          prevAction.bind 'click', @_prevClick
-          nextAction.bind 'click', @_nextClick
-          
-          unless @_controller.get_current_page() > 1
-            prevAction.css 'display', 'none'
-            actionsRemoved++
-          else
-            prevAction.css 'display', 'block'
-
-          unless parameters.cached.get('hasMore') == true
-            nextAction.css 'display', 'none'
-            actionsRemoved++
-          else
-            nextAction.css 'display', 'block'
-          
-          if actionsRemoved == 2 or @options.paging == false
-            @filterFind(@_menu, ".#{@options.pagingPanelCssClass}").css('display', 'none')
-          else
-            @filterFind(@_menu, ".#{@options.pagingPanelCssClass}").css('display', 'block')
-            
-          @filterFind(@_menu, ".#{@options.listItemCssClass}:first-child").addClass('selected')
-        
-          
-          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").unbind 'click', @_listItemLoadingClick
-          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_listItemClick
-        else
-          @_menu.empty()
-          list = $(@templates.loadedList(
-            cssClass: @options.loadedListCssClass
-            pagingPanelCssClass: @options.pagingPanelCssClass
-            prevActionCssClass: @options.prevActionCssClass
-            nextActionCssClass: @options.nextActionCssClass));
-
-          container = @filterFind(list, ".#{@options.loadedListCssClass}")
-
-          suggestions = parameters.cached.get('suggestions')
-          for suggestion in suggestions
-            suggestion.cssClass = @options.listItemCssClass
-            suggestion.actionCssClass = @options.listItemActionCssClass
-        
-            li = $(@templates.loadedItem(suggestion))
-            @filterFind(li, ".#{@options.listItemActionCssClass}").data('suggestion', suggestion)            
-            container.append(li)
-      
-          @_menu.append list
-      
-          nextAction = @filterFind(list, ".#{@options.nextActionCssClass}")
-          prevAction = @filterFind(list, ".#{@options.prevActionCssClass}")
-
-          prevAction.unbind 'click', @_moreLoadingClick
-          nextAction.unbind 'click', @_moreLoadingClick
-          prevAction.bind 'click', @_prevClick
-          nextAction.bind 'click', @_nextClick
-            
-          actionsRemoved = 0
-
-          unless @_controller.get_current_page() > 1
-            prevAction.css 'display', 'none'
-            actionsRemoved++
-
-          unless parameters.cached.get('hasMore') == true
-            nextAction.css 'display', 'none'
-            actionsRemoved++
-          
-          @filterFind(list, ".#{@options.pagingPanelCssClass}").css('display', 'none') if actionsRemoved == 2 or @options.paging == false
-       
-      
-          @filterFind(list, ".#{@options.listItemCssClass}:first-child").addClass('selected')
-          
-          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").unbind 'click', @_listItemLoadingClick
-          @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_listItemClick
-          
-      when 'empty'
-        @_menu.empty()
-        @_menu.append @templates.empty()
-      when 'error' 
-        @_menu.empty()
-        @_menu.append @templates.error()
-      else @render 'default'
+    @states[selectedState].call this, parameters

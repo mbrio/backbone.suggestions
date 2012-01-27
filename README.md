@@ -111,6 +111,8 @@ Options
         (default: 500)
     * `cssClass` = The CSS class that is applied to the containing element.
       (default: 'suggestions-menu')
+    * `loadingCssClass` = The CSS class that is applied whenever the menu
+      makes an AJAX call.
     * `nextActionCssClass` = The CSS class for the next action element.
     * `prevActionCssClass` = The CSS class for the previous action element.
     * `pagingPanelCssClass` = The CSS class for the paging container element.
