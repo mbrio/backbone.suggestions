@@ -6,10 +6,10 @@ class SuggestionView extends Backbone.View
   _controller: null
   _menu: null
   _previousValue: null
-  _blurTimeout = null
-  _donotBlur = false
-  _previousState = null
-  _currentState = null
+  _blurTimeout: null
+  _donotBlur: false
+  _previousState: null
+  _currentState: null
   
   ### Templates that define the layout of the menu for each of it's states ###
   templates:
@@ -77,8 +77,8 @@ class SuggestionView extends Backbone.View
     @_controller.is_enabled()
     
   _enabled: ->
-    @el.bind (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
-    @el.bind
+    @el.on (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
+    @el.on
       keyup: @_onkeyup
       blur: @_onblur
       focus: @_onfocus
@@ -88,8 +88,8 @@ class SuggestionView extends Backbone.View
   _disabled: ->
     @el.blur()
     
-    @el.unbind (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
-    @el.unbind
+    @el.off (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
+    @el.off
       keyup: @_onkeyup
       blur: @_onblur
       focus: @_onfocus
@@ -259,12 +259,12 @@ class SuggestionView extends Backbone.View
   _moreClick: (event, vector) =>
     nextAction = @filterFind(@_menu, ".#{@options.nextActionCssClass}")
     prevAction = @filterFind(@_menu, ".#{@options.prevActionCssClass}")
-    prevAction.unbind 'click', @_prevClick
-    nextAction.unbind 'click', @_nextClick
-    prevAction.bind 'click', @_moreLoadingClick
-    nextAction.bind 'click', @_moreLoadingClick
-    @filterFind(@_menu, ".#{@options.listItemActionCssClass}").unbind 'click', @_listItemClick
-    @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_listItemLoadingClick
+    prevAction.off 'click', @_prevClick
+    nextAction.off 'click', @_nextClick
+    prevAction.on 'click', @_moreLoadingClick
+    nextAction.on 'click', @_moreLoadingClick
+    @filterFind(@_menu, ".#{@options.listItemActionCssClass}").off 'click', @_listItemClick
+    @filterFind(@_menu, ".#{@options.listItemActionCssClass}").on 'click', @_listItemLoadingClick
     
     @_donotBlur = true
     clearTimeout @_blurTimeout
@@ -352,10 +352,10 @@ class SuggestionView extends Backbone.View
       nextAction = @filterFind(@_menu, ".#{@options.nextActionCssClass}")
       prevAction = @filterFind(@_menu, ".#{@options.prevActionCssClass}")
 
-      prevAction.unbind 'click', @_moreLoadingClick
-      nextAction.unbind 'click', @_moreLoadingClick
-      prevAction.bind 'click', @_prevClick
-      nextAction.bind 'click', @_nextClick
+      prevAction.off 'click', @_moreLoadingClick
+      nextAction.off 'click', @_moreLoadingClick
+      prevAction.on 'click', @_prevClick
+      nextAction.on 'click', @_nextClick
 
       actionsRemoved = 0
 
@@ -378,8 +378,8 @@ class SuggestionView extends Backbone.View
 
       @filterFind(@_menu, ".#{@options.listItemCssClass}:first-child").addClass('selected')
 
-      @filterFind(@_menu, ".#{@options.listItemActionCssClass}").unbind 'click', @_listItemLoadingClick
-      @filterFind(@_menu, ".#{@options.listItemActionCssClass}").bind 'click', @_listItemClick
+      @filterFind(@_menu, ".#{@options.listItemActionCssClass}").off 'click', @_listItemLoadingClick
+      @filterFind(@_menu, ".#{@options.listItemActionCssClass}").on 'click', @_listItemClick
       
       
   ### Renders the template of the menu ###
@@ -390,3 +390,36 @@ class SuggestionView extends Backbone.View
     @_currentState = state
 
     @states[selectedState].call this, parameters
+
+  ### Puts the view in a destroyed state that is no longer functional ###
+  destroy: ->
+    return if @isDestroyed
+    @isDestroyed = true
+    @halt()
+    clearTimeout @_blurTimeout
+    @_disabled()
+
+    @filterFind(@_menu, ".#{@options.nextActionCssClass}").off('click')
+    @filterFind(@_menu, ".#{@options.prevActionCssClass}").off('click')
+    @filterFind(@_menu, ".#{@options.listItemActionCssClass}").off 'click'
+
+    @_controller.destroy()
+
+    @_menu.remove()
+
+    @callbacks = null
+    @templates = null
+    @options = null
+    @_forceClosed = null
+    @_menuVisible = null
+    @_controller = null
+    @_menu = null
+    @_previousValue = null
+    @_blurTimeout = null
+    @_donotBlur = null
+    @_previousState = null
+    @_currentState = null
+    @_onkeydown = null
+    @_onkeyup = null
+    @_onfocus = null
+    @_onblur = null

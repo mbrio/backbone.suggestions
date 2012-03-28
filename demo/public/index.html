@@ -50,6 +50,9 @@
   </style>
 </head>
 <body>
+  <div>
+    <a href="javascript:void(0)" id="suggestion-destroy">Destroy</a>
+  </div>
   <div id='container'>
     <label for='state'>State:</label> <div><input type='text' id='state' name='state' class='suggestions'></div>
   </div>
@@ -69,6 +72,10 @@
         ajax: { url: '/suggestions.json?p=:page&t=:take&q=:query' },
         cache: false,
         take: 2
+      });
+
+      $('#suggestion-destroy').on('click', function() {
+          sv.destroy();
       });
     });
   </script>

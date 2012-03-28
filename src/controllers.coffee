@@ -2,6 +2,7 @@
 class SuggestionController  
   ### Initializes the object ###
   constructor: (@view, @el, options) ->
+    @isDestroyed = false;
     @options = _.defaults _.clone(options), @options
     @callbacks = _.defaults _.clone(@options.callbacks), @callbacks if @options?.callbacks?
     @ajax = _.defaults _.clone(@options.ajax), @ajax if @options?.ajax?
@@ -186,3 +187,19 @@ class SuggestionController
       suggestions = null
 
     suggestions
+
+  ### Puts the controller in a destroyed state that is no longer functional ###
+  destroy: ->
+    return if @isDestroyed
+    @isDestroyed = true
+    @halt()
+
+    @_cacheKey = null
+    @_request = null
+    @_timeout = null
+    @_currentPage = null
+    @options = null
+    @callbacks = null
+    @ajax = null
+    @_enabled = null
+    @_cache = null

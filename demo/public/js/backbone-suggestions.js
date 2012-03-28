@@ -1,5 +1,5 @@
-/*
-backbone.suggestions.js 0.8.7
+/*!
+backbone.suggestions.js 0.8.8
 Copyright (c) 2011-2012 Michael Diolosa, <michael.diolosa@gmail.com>
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.8.7';
+  Suggestions.version = '0.8.8';
 
   KEYS = {
     UP: 38,
@@ -87,6 +87,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       var _ref, _ref2, _ref3;
       this.view = view;
       this.el = el;
+      this.isDestroyed = false;
       this.options = _.defaults(_.clone(options), this.options);
       if (((_ref = this.options) != null ? _ref.callbacks : void 0) != null) {
         this.callbacks = _.defaults(_.clone(this.options.callbacks), this.callbacks);
@@ -372,6 +373,24 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       return suggestions;
     };
 
+    /* Puts the controller in a destroyed state that is no longer functional
+    */
+
+    SuggestionController.prototype.destroy = function() {
+      if (this.isDestroyed) return;
+      this.isDestroyed = true;
+      this.halt();
+      this._cacheKey = null;
+      this._request = null;
+      this._timeout = null;
+      this._currentPage = null;
+      this.options = null;
+      this.callbacks = null;
+      this.ajax = null;
+      this._enabled = null;
+      return this._cache = null;
+    };
+
     return SuggestionController;
 
   })();
@@ -380,7 +399,6 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
   */
 
   SuggestionView = (function() {
-    var _blurTimeout, _currentState, _donotBlur, _previousState;
 
     __extends(SuggestionView, Backbone.View);
 
@@ -410,13 +428,13 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype._previousValue = null;
 
-    _blurTimeout = null;
+    SuggestionView.prototype._blurTimeout = null;
 
-    _donotBlur = false;
+    SuggestionView.prototype._donotBlur = false;
 
-    _previousState = null;
+    SuggestionView.prototype._previousState = null;
 
-    _currentState = null;
+    SuggestionView.prototype._currentState = null;
 
     /* Templates that define the layout of the menu for each of it's states
     */
@@ -529,8 +547,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype._enabled = function() {
       var _ref, _ref2;
-      this.el.bind(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
-      this.el.bind({
+      this.el.on(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
+      this.el.on({
         keyup: this._onkeyup,
         blur: this._onblur,
         focus: this._onfocus
@@ -541,8 +559,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionView.prototype._disabled = function() {
       var _ref, _ref2;
       this.el.blur();
-      this.el.unbind(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
-      this.el.unbind({
+      this.el.off(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
+      this.el.off({
         keyup: this._onkeyup,
         blur: this._onblur,
         focus: this._onfocus
@@ -820,12 +838,12 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       var nextAction, prevAction;
       nextAction = this.filterFind(this._menu, "." + this.options.nextActionCssClass);
       prevAction = this.filterFind(this._menu, "." + this.options.prevActionCssClass);
-      prevAction.unbind('click', this._prevClick);
-      nextAction.unbind('click', this._nextClick);
-      prevAction.bind('click', this._moreLoadingClick);
-      nextAction.bind('click', this._moreLoadingClick);
-      this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemClick);
-      this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemLoadingClick);
+      prevAction.off('click', this._prevClick);
+      nextAction.off('click', this._nextClick);
+      prevAction.on('click', this._moreLoadingClick);
+      nextAction.on('click', this._moreLoadingClick);
+      this.filterFind(this._menu, "." + this.options.listItemActionCssClass).off('click', this._listItemClick);
+      this.filterFind(this._menu, "." + this.options.listItemActionCssClass).on('click', this._listItemLoadingClick);
       this._donotBlur = true;
       clearTimeout(this._blurTimeout);
       if (event.preventDefault) {
@@ -934,10 +952,10 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
         }
         nextAction = this.filterFind(this._menu, "." + this.options.nextActionCssClass);
         prevAction = this.filterFind(this._menu, "." + this.options.prevActionCssClass);
-        prevAction.unbind('click', this._moreLoadingClick);
-        nextAction.unbind('click', this._moreLoadingClick);
-        prevAction.bind('click', this._prevClick);
-        nextAction.bind('click', this._nextClick);
+        prevAction.off('click', this._moreLoadingClick);
+        nextAction.off('click', this._moreLoadingClick);
+        prevAction.on('click', this._prevClick);
+        nextAction.on('click', this._nextClick);
         actionsRemoved = 0;
         if (!(this._controller.get_current_page() > 1)) {
           prevAction.css('display', 'none');
@@ -957,8 +975,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           this.filterFind(this._menu, "." + this.options.pagingPanelCssClass).css('display', 'block');
         }
         this.filterFind(this._menu, "." + this.options.listItemCssClass + ":first-child").addClass('selected');
-        this.filterFind(this._menu, "." + this.options.listItemActionCssClass).unbind('click', this._listItemLoadingClick);
-        return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).bind('click', this._listItemClick);
+        this.filterFind(this._menu, "." + this.options.listItemActionCssClass).off('click', this._listItemLoadingClick);
+        return this.filterFind(this._menu, "." + this.options.listItemActionCssClass).on('click', this._listItemClick);
       }
     };
 
@@ -972,6 +990,38 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       if (this.states.hasOwnProperty(state)) selectedState = state;
       this._currentState = state;
       return this.states[selectedState].call(this, parameters);
+    };
+
+    /* Puts the view in a destroyed state that is no longer functional
+    */
+
+    SuggestionView.prototype.destroy = function() {
+      if (this.isDestroyed) return;
+      this.isDestroyed = true;
+      this.halt();
+      clearTimeout(this._blurTimeout);
+      this._disabled();
+      this.filterFind(this._menu, "." + this.options.nextActionCssClass).off('click');
+      this.filterFind(this._menu, "." + this.options.prevActionCssClass).off('click');
+      this.filterFind(this._menu, "." + this.options.listItemActionCssClass).off('click');
+      this._controller.destroy();
+      this._menu.remove();
+      this.callbacks = null;
+      this.templates = null;
+      this.options = null;
+      this._forceClosed = null;
+      this._menuVisible = null;
+      this._controller = null;
+      this._menu = null;
+      this._previousValue = null;
+      this._blurTimeout = null;
+      this._donotBlur = null;
+      this._previousState = null;
+      this._currentState = null;
+      this._onkeydown = null;
+      this._onkeyup = null;
+      this._onfocus = null;
+      return this._onblur = null;
     };
 
     return SuggestionView;
