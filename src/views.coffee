@@ -403,9 +403,8 @@ class SuggestionView extends Backbone.View
     @filterFind(@_menu, ".#{@options.prevActionCssClass}").off('click')
     @filterFind(@_menu, ".#{@options.listItemActionCssClass}").off 'click'
 
-    @_controller.destroy()
-
     @_menu.remove()
+    @_controller.destroy()
 
     @callbacks = null
     @templates = null
