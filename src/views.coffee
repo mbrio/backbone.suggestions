@@ -55,7 +55,7 @@ class SuggestionView extends Backbone.View
     
   ### Initializes the object ###
   initialize: ->
-    @el.attr 'autocomplete', 'off'
+    @$el.attr 'autocomplete', 'off'
     @templates = _.clone _.defaults(@options.templates, @templates) if @options?.templates?
     @callbacks = _.clone _.defaults(@options.callbacks, @callbacks) if @options?.callbacks?
     
@@ -69,7 +69,7 @@ class SuggestionView extends Backbone.View
       enabled: => @_enabled()
       disabled: => @_disabled()
 
-    @_controller = new SuggestionController this, @el, @options
+    @_controller = new SuggestionController this, @$el, @options
     
     @_generateMenu()
       
@@ -77,8 +77,8 @@ class SuggestionView extends Backbone.View
     @_controller.is_enabled()
     
   _enabled: ->
-    @el.on (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
-    @el.on
+    @$el.on (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
+    @$el.on
       keyup: @_onkeyup
       blur: @_onblur
       focus: @_onfocus
@@ -86,10 +86,10 @@ class SuggestionView extends Backbone.View
     @callbacks?.enabled?.call(this)
     
   _disabled: ->
-    @el.blur()
+    @$el.blur()
     
-    @el.off (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
-    @el.off
+    @$el.off (if $.browser.opera then 'keypress' else 'keydown'), @_onkeydown
+    @$el.off
       keyup: @_onkeyup
       blur: @_onblur
       focus: @_onfocus
@@ -111,7 +111,7 @@ class SuggestionView extends Backbone.View
   ### Callback for when a suggestion is initialized ###
   _initiateSuggestion: ->
     @callbacks.initiateSuggestion?.call(this)
-    @render 'default' unless @el.val()?.length > 0
+    @render 'default' unless @$el.val()?.length > 0
 
   ### Callback for when a suggestion is processing ###
   _suggesting: ->
@@ -191,9 +191,9 @@ class SuggestionView extends Backbone.View
         if @_menuVisible
           if event.preventDefault then event.preventDefault() else event.returnValue = false
       else
-        if @_menuVisible and @_previousValue isnt @el.val()
+        if @_menuVisible and @_previousValue isnt @$el.val()
           @_controller.suggest()
-          @_previousValue = @el.val()
+          @_previousValue = @$el.val()
 
   ### Shows the menu when the element's focus event is fired ###
   _focus: (event) ->
@@ -215,7 +215,7 @@ class SuggestionView extends Backbone.View
     @_menu = $(@templates.container({ cssClass: @options.cssClass })).css
       display: 'none'
 
-    @el.parent().append(@_menu)
+    @$el.parent().append(@_menu)
     
   ### Displays the menu ###
   show: ->
@@ -247,7 +247,7 @@ class SuggestionView extends Backbone.View
       
   ### Selects a value ###
   select: (val) ->
-    @el.val val[@options.valueField]
+    @$el.val val[@options.valueField]
     @callbacks.selected?.call(this, val)
     
   filterFind: (jq, selector) ->
@@ -270,7 +270,7 @@ class SuggestionView extends Backbone.View
     clearTimeout @_blurTimeout
     if event.preventDefault then event.preventDefault() else event.returnValue = false
   
-    @el.focus()
+    @$el.focus()
     @_donotBlur = false
     @_controller.suggest(vector)
     
@@ -279,7 +279,7 @@ class SuggestionView extends Backbone.View
     clearTimeout @_blurTimeout
     if event.preventDefault then event.preventDefault() else event.returnValue = false
   
-    @el.focus()
+    @$el.focus()
     @_donotBlur = false
     
   _nextClick: (event) =>

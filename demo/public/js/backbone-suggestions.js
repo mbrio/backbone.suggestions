@@ -1,5 +1,5 @@
 /*!
-backbone.suggestions.js 0.8.8
+backbone.suggestions.js 0.8.9
 Copyright (c) 2011-2012 Michael Diolosa, <michael.diolosa@gmail.com>
 backbone.suggestions.js may be freely distributed under the MIT license.
 For all details and documentation:
@@ -15,7 +15,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
   Suggestions = root.Suggestions = {};
 
-  Suggestions.version = '0.8.8';
+  Suggestions.version = '0.8.9';
 
   KEYS = {
     UP: 38,
@@ -504,7 +504,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionView.prototype.initialize = function() {
       var _ref, _ref2;
       var _this = this;
-      this.el.attr('autocomplete', 'off');
+      this.$el.attr('autocomplete', 'off');
       if (((_ref = this.options) != null ? _ref.templates : void 0) != null) {
         this.templates = _.clone(_.defaults(this.options.templates, this.templates));
       }
@@ -537,7 +537,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           return _this._disabled();
         }
       };
-      this._controller = new SuggestionController(this, this.el, this.options);
+      this._controller = new SuggestionController(this, this.$el, this.options);
       return this._generateMenu();
     };
 
@@ -547,8 +547,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype._enabled = function() {
       var _ref, _ref2;
-      this.el.on(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
-      this.el.on({
+      this.$el.on(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
+      this.$el.on({
         keyup: this._onkeyup,
         blur: this._onblur,
         focus: this._onfocus
@@ -558,9 +558,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype._disabled = function() {
       var _ref, _ref2;
-      this.el.blur();
-      this.el.off(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
-      this.el.off({
+      this.$el.blur();
+      this.$el.off(($.browser.opera ? 'keypress' : 'keydown'), this._onkeydown);
+      this.$el.off({
         keyup: this._onkeyup,
         blur: this._onblur,
         focus: this._onfocus
@@ -594,7 +594,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
     SuggestionView.prototype._initiateSuggestion = function() {
       var _ref, _ref2;
       if ((_ref = this.callbacks.initiateSuggestion) != null) _ref.call(this);
-      if (!(((_ref2 = this.el.val()) != null ? _ref2.length : void 0) > 0)) {
+      if (!(((_ref2 = this.$el.val()) != null ? _ref2.length : void 0) > 0)) {
         return this.render('default');
       }
     };
@@ -737,9 +737,9 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
           }
           break;
         default:
-          if (this._menuVisible && this._previousValue !== this.el.val()) {
+          if (this._menuVisible && this._previousValue !== this.$el.val()) {
             this._controller.suggest();
-            return this._previousValue = this.el.val();
+            return this._previousValue = this.$el.val();
           }
       }
     };
@@ -777,7 +777,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       })).css({
         display: 'none'
       });
-      return this.el.parent().append(this._menu);
+      return this.$el.parent().append(this._menu);
     };
 
     /* Displays the menu
@@ -823,7 +823,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
 
     SuggestionView.prototype.select = function(val) {
       var _ref;
-      this.el.val(val[this.options.valueField]);
+      this.$el.val(val[this.options.valueField]);
       return (_ref = this.callbacks.selected) != null ? _ref.call(this, val) : void 0;
     };
 
@@ -851,7 +851,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       } else {
         event.returnValue = false;
       }
-      this.el.focus();
+      this.$el.focus();
       this._donotBlur = false;
       return this._controller.suggest(vector);
     };
@@ -864,7 +864,7 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       } else {
         event.returnValue = false;
       }
-      this.el.focus();
+      this.$el.focus();
       return this._donotBlur = false;
     };
 
@@ -1004,8 +1004,8 @@ https://github.com/mbrio/backbone.suggestions/wiki/License
       this.filterFind(this._menu, "." + this.options.nextActionCssClass).off('click');
       this.filterFind(this._menu, "." + this.options.prevActionCssClass).off('click');
       this.filterFind(this._menu, "." + this.options.listItemActionCssClass).off('click');
-      this._controller.destroy();
       this._menu.remove();
+      this._controller.destroy();
       this.callbacks = null;
       this.templates = null;
       this.options = null;
