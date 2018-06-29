@@ -244,7 +244,7 @@ you must pass in a custom `templates.loadedItem` template, as well as the
     
 Testing
 ---
-All of the tests are built using [Jasmine](http://pivotal.github.com/jasmine/)
+All of the tests are built using [Jasmine](https://jasmine.github.io/)
 and [Mary](https://github.com/alexeypetrushin/mary). You can run the tests by
 launching /specs/SpecRunner.html in your browser after running the following
 commands:
